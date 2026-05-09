@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" role="img" aria-label="Auto workshop">
+  <rect width="900" height="520" fill="#071018"/>
+  <rect x="0" y="330" width="900" height="190" fill="#1f2933"/>
+  <path d="M120 360h520l70 64H88z" fill="#111827"/>
+  <path d="M235 285h270l92 75H150z" fill="#f97316"/>
+  <path d="M260 305h218l54 44H202z" fill="#e5e7eb"/>
+  <circle cx="220" cy="430" r="48" fill="#020617" stroke="#e5e7eb" stroke-width="14"/>
+  <circle cx="590" cy="430" r="48" fill="#020617" stroke="#e5e7eb" stroke-width="14"/>
+  <path d="M710 155h70v210h-70z" fill="#374151"/>
+  <path d="M690 125h110v42H690z" fill="#f97316"/>
+</svg>

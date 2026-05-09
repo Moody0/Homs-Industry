@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" role="img" aria-label="Welding workshop">
+  <rect width="900" height="520" fill="#071018"/>
+  <rect x="0" y="355" width="900" height="165" fill="#111827"/>
+  <rect x="115" y="260" width="630" height="82" transform="skewX(-12)" fill="#374151"/>
+  <circle cx="610" cy="220" r="72" fill="#020617" stroke="#6b7280" stroke-width="14"/>
+  <path d="M565 250C410 305 270 350 110 405" stroke="#f97316" stroke-width="8" stroke-linecap="round"/>
+  <path d="M580 260C465 355 360 410 210 500" stroke="#fb923c" stroke-width="5" stroke-linecap="round"/>
+  <path d="M552 235C420 225 300 235 180 260" stroke="#ffedd5" stroke-width="4" stroke-linecap="round"/>
+</svg>
