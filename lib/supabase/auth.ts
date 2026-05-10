@@ -2,7 +2,9 @@ import "server-only";
 
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSession } from "next-auth";
+import { authConfig } from "@/auth.config";
+import { dbQuery } from "@/lib/db/postgres";
 
 export type ProfileRole = "user" | "admin";
 
@@ -16,14 +18,16 @@ export type CurrentProfile = {
 };
 
 export const getCurrentUser = cache(async () => {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error) {
+  const session = await getServerSession(authConfig);
+  
+  if (!session?.user?.id) {
     return null;
   }
 
-  return data.user;
+  return {
+    id: session.user.id,
+    email: session.user.email,
+  };
 });
 
 export const getCurrentProfile = cache(async (): Promise<CurrentProfile | null> => {
@@ -33,18 +37,17 @@ export const getCurrentProfile = cache(async (): Promise<CurrentProfile | null> 
     return null;
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, full_name, username, phone, avatar_url, role")
-    .eq("id", user.id)
-    .single();
+  const { rows } = await dbQuery<CurrentProfile>(
+    "select id::text, full_name, username::text, phone, avatar_url, role from public.profiles where id = $1 limit 1",
+    [user.id],
+  );
 
-  if (error || !data) {
+  const profile = rows[0];
+  if (!profile) {
     return null;
   }
 
-  return data as CurrentProfile;
+  return profile;
 });
 
 export async function getCurrentUserRole() {

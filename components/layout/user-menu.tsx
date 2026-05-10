@@ -1,5 +1,5 @@
-import { LayoutDashboard, LogOut, UserRound } from "lucide-react";
-import { logoutAction } from "@/actions/auth";
+import { LayoutDashboard, UserRound } from "lucide-react";
+import { LogoutButton } from "@/components/auth/logout-button";
 import { ButtonLink } from "@/components/ui/button";
 import { getCurrentProfile } from "@/lib/supabase/auth";
 
@@ -25,16 +25,7 @@ export async function UserMenu() {
         <LayoutDashboard aria-hidden className="size-4" />
         لوحتي
       </ButtonLink>
-      <form action={logoutAction}>
-        <button
-          className="inline-flex size-9 items-center justify-center rounded-lg border border-white/15 text-white transition hover:bg-white/10"
-          title="تسجيل خروج"
-          type="submit"
-        >
-          <LogOut aria-hidden className="size-4" />
-          <span className="sr-only">تسجيل خروج</span>
-        </button>
-      </form>
+      <LogoutButton />
     </div>
   );
 }

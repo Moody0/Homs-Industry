@@ -1,31 +1,12 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { getSupabasePublicEnv } from "@/lib/env";
 
+/**
+ * This file is kept for backward compatibility but is no longer used.
+ * Session management is now handled by NextAuth in the root proxy.ts file.
+ * 
+ * @deprecated Use NextAuth session management instead
+ */
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
-  const { supabasePublishableKey, supabaseUrl } = getSupabasePublicEnv();
-
-  const supabase = createServerClient(supabaseUrl, supabasePublishableKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => {
-          request.cookies.set(name, value);
-        });
-
-        response = NextResponse.next({ request });
-
-        cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
-        });
-      },
-    },
-  });
-
-  await supabase.auth.getUser();
-
-  return response;
+  // NextAuth handles session management automatically
+  return NextResponse.next({ request });
 }
