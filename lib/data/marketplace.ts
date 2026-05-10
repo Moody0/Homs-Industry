@@ -48,8 +48,19 @@ export type BusinessSummary = {
   longitude: number | null;
   status: "pending" | "approved" | "rejected";
   is_featured: boolean;
+  is_verified: boolean;
+  is_trusted: boolean;
+  price_range: string | null;
+  service_modes: string[];
+  languages: string[];
+  payment_methods: string[];
+  years_experience: number | null;
+  owner_bio: string | null;
+  team_info: string | null;
+  brochure_url: string | null;
   rating_average: number;
   reviews_count: number;
+  distance_km?: number | null;
   cover_image_url: string | null;
   logo_url: string | null;
   category_id: string;
@@ -66,7 +77,31 @@ type BusinessRow = Omit<BusinessSummary, "category" | "subcategory"> & {
 };
 
 export const businessListSelect =
-  "id, name, slug, description, phone, whatsapp_phone, address, area, latitude, longitude, status, is_featured, rating_average, reviews_count, cover_image_url, logo_url, category_id, subcategory_id, owner_id, category:categories(name, slug), subcategory:subcategories!businesses_subcategory_id_fkey(name, slug)";
+  "id, name, slug, description, phone, whatsapp_phone, address, area, latitude, longitude, status, is_featured, is_verified, is_trusted, price_range, service_modes, languages, payment_methods, years_experience, owner_bio, team_info, brochure_url, rating_average, reviews_count, cover_image_url, logo_url, category_id, subcategory_id, area_id, owner_id, category:categories(name, slug), subcategory:subcategories!businesses_subcategory_id_fkey(name, slug)";
+
+export const priceRangeLabels: Record<string, string> = {
+  budget: "اقتصادي",
+  mid: "متوسط",
+  premium: "مرتفع",
+};
+
+export const serviceModeLabels: Record<string, string> = {
+  delivery: "توصيل",
+  pickup: "استلام",
+  onsite: "خدمة بالموقع",
+};
+
+export const languageLabels: Record<string, string> = {
+  ar: "العربية",
+  en: "الإنكليزية",
+  tr: "التركية",
+};
+
+export const paymentMethodLabels: Record<string, string> = {
+  cash: "نقداً",
+  transfer: "تحويل",
+  card: "بطاقة",
+};
 
 const fallbackBusinessCovers: Record<string, string> = {
   "abu-ahmad-welding": "/images/seed/welding-cover.svg",
@@ -141,6 +176,16 @@ export const fallbackBusinesses: BusinessSummary[] = [
     longitude: 36.7137,
     status: "approved",
     is_featured: true,
+    is_verified: true,
+    is_trusted: true,
+    price_range: "mid",
+    service_modes: ["onsite"],
+    languages: ["ar"],
+    payment_methods: ["cash"],
+    years_experience: 12,
+    owner_bio: null,
+    team_info: null,
+    brochure_url: null,
     rating_average: 4.6,
     reviews_count: 18,
     cover_image_url: "/images/seed/auto-cover.svg",
@@ -164,6 +209,16 @@ export const fallbackBusinesses: BusinessSummary[] = [
     longitude: 36.724,
     status: "approved",
     is_featured: false,
+    is_verified: true,
+    is_trusted: false,
+    price_range: "premium",
+    service_modes: ["pickup", "onsite"],
+    languages: ["ar"],
+    payment_methods: ["cash", "transfer"],
+    years_experience: 8,
+    owner_bio: null,
+    team_info: null,
+    brochure_url: null,
     rating_average: 4.8,
     reviews_count: 22,
     cover_image_url: "/images/seed/carpentry-cover.svg",
@@ -187,6 +242,16 @@ export const fallbackBusinesses: BusinessSummary[] = [
     longitude: 36.707,
     status: "approved",
     is_featured: false,
+    is_verified: false,
+    is_trusted: false,
+    price_range: "mid",
+    service_modes: ["pickup"],
+    languages: ["ar"],
+    payment_methods: ["cash"],
+    years_experience: 6,
+    owner_bio: null,
+    team_info: null,
+    brochure_url: null,
     rating_average: 4.7,
     reviews_count: 15,
     cover_image_url: "/images/seed/auto-cover.svg",
@@ -210,6 +275,16 @@ export const fallbackBusinesses: BusinessSummary[] = [
     longitude: 36.68,
     status: "approved",
     is_featured: true,
+    is_verified: false,
+    is_trusted: true,
+    price_range: "budget",
+    service_modes: ["onsite"],
+    languages: ["ar"],
+    payment_methods: ["cash"],
+    years_experience: 15,
+    owner_bio: null,
+    team_info: null,
+    brochure_url: null,
     rating_average: 4.5,
     reviews_count: 11,
     cover_image_url: "/images/seed/welding-cover.svg",
@@ -238,6 +313,13 @@ export function normalizeBusinesses(rows: unknown): BusinessSummary[] {
 
 export function formatRating(value: number | string | null | undefined) {
   return Number(value ?? 0).toFixed(1);
+}
+
+export function formatDistance(value: number | string | null | undefined) {
+  if (value === null || value === undefined) return null;
+  const distance = Number(value);
+  if (!Number.isFinite(distance)) return null;
+  return distance < 1 ? `${Math.round(distance * 1000)} م` : `${distance.toFixed(1)} كم`;
 }
 
 export function slugifyArabic(value: string) {

@@ -26,7 +26,7 @@ export function RegisterForm() {
         id="email"
         label="البريد الإلكتروني"
         name="email"
-        placeholder="admin@example.com"
+        placeholder="name@email.com"
         required
         type="email"
       />
@@ -36,7 +36,7 @@ export function RegisterForm() {
         id="username"
         label="اسم المستخدم"
         name="username"
-        placeholder="ahmad_workshop"
+        placeholder="ahmad_123"
         required
       />
       <AuthField
@@ -45,7 +45,7 @@ export function RegisterForm() {
         id="phone"
         label="رقم الهاتف"
         name="phone"
-        placeholder="09XXXXXXXX"
+        placeholder="09xxxxxxxx"
         required
         type="tel"
       />

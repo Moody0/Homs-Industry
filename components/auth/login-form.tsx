@@ -18,7 +18,7 @@ export function LoginForm() {
         id="identifier"
         label="البريد الإلكتروني أو اسم المستخدم"
         name="identifier"
-        placeholder="admin@example.com أو admin"
+        placeholder="name@email.com أو اسم المستخدم"
         required
       />
       <AuthField

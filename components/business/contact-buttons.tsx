@@ -6,13 +6,14 @@ type ContactButtonsProps = {
   phone: string;
   whatsappPhone?: string | null;
   className?: string;
+  businessId?: string;
 };
 
-export function ContactButtons({ phone, whatsappPhone, className }: ContactButtonsProps) {
+export function ContactButtons({ phone, whatsappPhone, className, businessId }: ContactButtonsProps) {
   return (
     <div className={cn("flex flex-wrap gap-2", className)}>
-      <CallButton phone={phone} />
-      <WhatsAppButton phone={whatsappPhone || phone} />
+      <CallButton businessId={businessId} phone={phone} />
+      <WhatsAppButton businessId={businessId} phone={whatsappPhone || phone} />
     </div>
   );
 }

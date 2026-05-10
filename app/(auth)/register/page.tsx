@@ -12,7 +12,7 @@ export default async function RegisterPage() {
 
   return (
     <AuthShell
-      description="سيتم إنشاء الحساب بالبريد الإلكتروني وكلمة المرور، مع حفظ بيانات التواصل في الملف الشخصي."
+      description="أنشئ حسابك لتتمكن من إضافة المحلات وحفظ المفضلة وكتابة التقييمات."
       footerHref="/login"
       footerLinkText="تسجيل دخول"
       footerText="لديك حساب بالفعل؟"

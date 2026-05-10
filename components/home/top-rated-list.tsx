@@ -6,7 +6,7 @@ import type { BusinessSummary } from "@/lib/data/marketplace";
 
 export function TopRatedList({ businesses }: { businesses: BusinessSummary[] }) {
   return (
-    <aside className="order-2 self-start rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:order-1">
+    <aside className="order-1 self-start rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="inline-flex items-center gap-2 text-xl font-black text-slate-950"><TrendingUp aria-hidden className="size-5 text-slate-950" /> الأكثر تقييماً</h2>
       </div>

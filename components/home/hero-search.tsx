@@ -15,7 +15,7 @@ export function HeroSearch({ ad, hero }: { ad?: HomeAd; hero: HomeHeroSettings }
         />
         <span className="absolute inset-0 bg-black/55 md:bg-black/45" aria-hidden />
 
-        <Container className="relative grid min-h-[360px] items-center gap-6 py-8 sm:min-h-[390px] md:min-h-[340px] lg:min-h-[260px] lg:grid-cols-[1fr_290px]">
+        <Container className="relative grid min-h-[360px] items-center gap-6 py-6 sm:min-h-[390px] md:min-h-[340px] lg:min-h-[260px] lg:grid-cols-[1fr_290px] lg:py-8">
           <div className="mx-auto w-full max-w-4xl text-center [text-shadow:0_2px_14px_rgba(0,0,0,0.72)]">
             <h1 className="text-3xl font-black leading-tight md:text-5xl">
               كل ما تحتاجه من
@@ -38,12 +38,13 @@ export function HeroSearch({ ad, hero }: { ad?: HomeAd; hero: HomeHeroSettings }
                 <span className="md:sr-only">بحث</span>
               </button>
             </form>
+
+            <div className="mx-auto mt-4 w-full max-w-md text-right [text-shadow:none] lg:hidden">
+              <HeroAdCard ad={ad} variant="mobile" />
+            </div>
           </div>
           <HeroAdCard ad={ad} />
         </Container>
-      </section>
-      <section className="bg-[#071018] px-4 pb-4 lg:hidden">
-        <HeroAdCard ad={ad} variant="mobile" />
       </section>
     </>
   );

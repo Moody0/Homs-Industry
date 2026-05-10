@@ -20,6 +20,9 @@ export async function upsertReviewAction(
   const parsed = reviewSchema.safeParse({
     businessId: formData.get("businessId"),
     rating: formData.get("rating"),
+    qualityRating: formData.get("qualityRating") || null,
+    serviceRating: formData.get("serviceRating") || null,
+    valueRating: formData.get("valueRating") || null,
     comment: formData.get("comment"),
   });
 
@@ -33,6 +36,9 @@ export async function upsertReviewAction(
       business_id: parsed.data.businessId,
       user_id: user.id,
       rating: Number(parsed.data.rating),
+      quality_rating: parsed.data.qualityRating ? Number(parsed.data.qualityRating) : null,
+      service_rating: parsed.data.serviceRating ? Number(parsed.data.serviceRating) : null,
+      value_rating: parsed.data.valueRating ? Number(parsed.data.valueRating) : null,
       comment: parsed.data.comment || null,
       status: "approved",
     },
@@ -54,6 +60,52 @@ export async function upsertReviewAction(
   }
 
   return { success: true, message: "تم حفظ تقييمك بنجاح" };
+}
+
+export async function toggleHelpfulReviewAction(formData: FormData) {
+  const user = await requireUser();
+  const reviewId = String(formData.get("reviewId") ?? "");
+  const businessSlug = String(formData.get("businessSlug") ?? "");
+  const supabase = await createClient();
+
+  if (!reviewId) return;
+
+  const { data: existing } = await supabase
+    .from("review_helpful_votes")
+    .select("review_id")
+    .eq("review_id", reviewId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase.from("review_helpful_votes").delete().eq("review_id", reviewId).eq("user_id", user.id);
+  } else {
+    await supabase.from("review_helpful_votes").insert({ review_id: reviewId, user_id: user.id });
+  }
+
+  if (businessSlug) revalidatePath(`/businesses/${businessSlug}`);
+}
+
+export async function reportReviewAction(formData: FormData) {
+  const user = await requireUser();
+  const reviewId = String(formData.get("reviewId") ?? "");
+  const businessSlug = String(formData.get("businessSlug") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  const supabase = await createClient();
+
+  if (!reviewId || reason.length < 3) return;
+
+  await supabase.from("review_reports").upsert(
+    {
+      reason,
+      review_id: reviewId,
+      status: "pending",
+      user_id: user.id,
+    },
+    { onConflict: "review_id,user_id" },
+  );
+
+  if (businessSlug) revalidatePath(`/businesses/${businessSlug}`);
 }
 
 export async function deleteReviewAction(formData: FormData) {

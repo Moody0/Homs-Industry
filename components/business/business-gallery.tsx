@@ -12,10 +12,13 @@ export function BusinessGallery({ images, fallbackAlt }: { images: BusinessGalle
 
   return (
     <Card>
-      <CardHeader><h2 className="text-xl font-black">معرض الصور</h2></CardHeader>
+      <CardHeader>
+        <p className="text-xs font-black text-orange-600">صور من المكان</p>
+        <h2 className="text-xl font-black text-slate-950">معرض الصور</h2>
+      </CardHeader>
       <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {images.map((image) => (
-          <div className="relative h-44 overflow-hidden rounded-lg bg-slate-100" key={image.id}>
+          <div className="relative h-48 overflow-hidden rounded-lg bg-slate-100 sm:h-44" key={image.id}>
             <Image alt={image.alt_text ?? fallbackAlt} className="object-cover" fill sizes="(max-width: 768px) 100vw, 33vw" src={image.image_url} />
           </div>
         ))}

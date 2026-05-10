@@ -12,7 +12,7 @@ export default async function LoginPage() {
 
   return (
     <AuthShell
-      description="ادخل بالبريد الإلكتروني أو اسم المستخدم. رسائل الخطأ موحدة لحماية الحسابات من التعداد."
+      description="ادخل بالبريد الإلكتروني أو اسم المستخدم وكلمة المرور."
       footerHref="/register"
       footerLinkText="إنشاء حساب جديد"
       footerText="ليس لديك حساب؟"

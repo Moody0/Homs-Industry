@@ -3,7 +3,9 @@ import {
   approveBusinessAction,
   deleteBusinessAction,
   rejectBusinessAction,
+  toggleBusinessTrustedAction,
   toggleBusinessFeaturedAction,
+  toggleBusinessVerifiedAction,
   updateBusinessAction,
 } from "@/actions/admin";
 import { AdminActionForm, AdminSubmitButton } from "@/components/admin/admin-action-form";
@@ -29,6 +31,8 @@ type AdminBusinessRow = {
   area: string;
   status: string;
   is_featured: boolean;
+  is_verified: boolean;
+  is_trusted: boolean;
   rating_average: number | string;
   reviews_count: number;
   rejection_reason: string | null;
@@ -63,7 +67,7 @@ export default async function AdminBusinessesPage({ searchParams }: AdminBusines
   let query = supabase
     .from("businesses")
     .select(
-      "id, name, slug, phone, area, status, is_featured, rating_average, reviews_count, rejection_reason, created_at, category:categories(name), owner:profiles!businesses_owner_id_fkey(full_name, username)",
+      "id, name, slug, phone, area, status, is_featured, is_verified, is_trusted, rating_average, reviews_count, rejection_reason, created_at, category:categories(name), owner:profiles!businesses_owner_id_fkey(full_name, username)",
       { count: "exact" },
     )
     .order("created_at", { ascending: false });
@@ -113,6 +117,8 @@ export default async function AdminBusinessesPage({ searchParams }: AdminBusines
           <div key="status" className="grid gap-1">
             <StatusBadge status={business.status}>{business.status}</StatusBadge>
             <StatusBadge status={business.is_featured ? "approved" : "inactive"}>{business.is_featured ? "مميز" : "غير مميز"}</StatusBadge>
+            <StatusBadge status={business.is_verified ? "approved" : "inactive"}>{business.is_verified ? "موثق" : "غير موثق"}</StatusBadge>
+            <StatusBadge status={business.is_trusted ? "approved" : "inactive"}>{business.is_trusted ? "موثوق" : "غير موثوق"}</StatusBadge>
           </div>,
           <div key="rating" className="text-xs font-bold text-slate-700">
             {Number(business.rating_average).toFixed(1)} / 5
@@ -132,6 +138,16 @@ export default async function AdminBusinessesPage({ searchParams }: AdminBusines
                 <input name="businessId" type="hidden" value={business.id} />
                 <input name="isFeatured" type="hidden" value={String(business.is_featured)} />
                 <AdminSubmitButton className="rounded-md bg-slate-900 px-3 py-1 text-xs font-black text-white disabled:opacity-70">{business.is_featured ? "إلغاء التمييز" : "تمييز"}</AdminSubmitButton>
+              </AdminActionForm>
+              <AdminActionForm action={toggleBusinessVerifiedAction}>
+                <input name="businessId" type="hidden" value={business.id} />
+                <input name="isVerified" type="hidden" value={String(business.is_verified)} />
+                <AdminSubmitButton className="rounded-md bg-green-700 px-3 py-1 text-xs font-black text-white disabled:opacity-70">{business.is_verified ? "إلغاء التوثيق" : "توثيق"}</AdminSubmitButton>
+              </AdminActionForm>
+              <AdminActionForm action={toggleBusinessTrustedAction}>
+                <input name="businessId" type="hidden" value={business.id} />
+                <input name="isTrusted" type="hidden" value={String(business.is_trusted)} />
+                <AdminSubmitButton className="rounded-md bg-indigo-700 px-3 py-1 text-xs font-black text-white disabled:opacity-70">{business.is_trusted ? "إلغاء موثوق" : "موثوق"}</AdminSubmitButton>
               </AdminActionForm>
               <AdminActionForm action={deleteBusinessAction} confirmMessage={`هل تريد حذف المحل "${business.name}"؟ لا يمكن التراجع عن هذا الإجراء.`}>
                 <input name="businessId" type="hidden" value={business.id} />

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { addBusinessAction, type BusinessActionState } from "@/actions/businesses";
 import { AuthField } from "@/components/auth/auth-field";
+import { LocationPicker } from "@/components/forms/location-picker";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { UploadImageField } from "@/components/forms/upload-image-field";
 import type { AreaSummary, CategorySummary, SubcategorySummary } from "@/lib/data/marketplace";
@@ -66,10 +67,7 @@ export function AddBusinessForm({ areas, categories, subcategories }: AddBusines
 
       <AuthField id="address" label="العنوان" name="address" placeholder="حمص - الحي - الشارع" required />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <AuthField id="latitude" label="خط العرض اختياري" name="latitude" placeholder="34.7351000" />
-        <AuthField id="longitude" label="خط الطول اختياري" name="longitude" placeholder="36.7112000" />
-      </div>
+      <LocationPicker />
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-2" htmlFor="services">

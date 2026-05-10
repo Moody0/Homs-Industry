@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { deleteReviewAction, moderateReviewAction } from "@/actions/admin";
+import { deleteReviewAction, moderateReviewAction, moderateReviewReportAction } from "@/actions/admin";
 import { AdminActionForm, AdminSubmitButton } from "@/components/admin/admin-action-form";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminTable } from "@/components/admin/admin-table";
@@ -21,6 +21,15 @@ type ReviewRow = {
   status: string;
   created_at: string;
   business: ReviewRelation<{ name: string; slug: string }>;
+  user: ReviewRelation<{ full_name: string; username: string }>;
+};
+
+type ReportRow = {
+  id: string;
+  reason: string;
+  status: string;
+  created_at: string;
+  review: ReviewRelation<{ id: string; comment: string | null; business: ReviewRelation<{ name: string; slug: string }> }>;
   user: ReviewRelation<{ full_name: string; username: string }>;
 };
 
@@ -69,6 +78,13 @@ export default async function AdminReviewsPage({ searchParams }: AdminReviewsPag
 
   const { count, data: reviews } = await query.range(range.from, range.to);
   const rows = (reviews ?? []) as ReviewRow[];
+
+  const { data: reportRows } = await supabase
+    .from("review_reports")
+    .select("id, reason, status, created_at, review:reviews(id, comment, business:businesses(name, slug)), user:profiles(full_name, username)")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  const reports = (reportRows ?? []) as ReportRow[];
 
   return (
     <>
@@ -123,6 +139,39 @@ export default async function AdminReviewsPage({ searchParams }: AdminReviewsPag
       />
 
       <Pagination basePath="/admin/reviews" page={page} searchParams={params} totalPages={getTotalPages(count, adminPageSize)} />
+
+      <div className="mt-8">
+        <AdminHeader description="بلاغات المستخدمين على التقييمات، راجعها وأغلقها أو اعتمدها." title="بلاغات التقييمات" />
+        <AdminTable
+          emptyText="لا توجد بلاغات."
+          headers={["المحل", "المستخدم", "السبب", "التقييم", "الحالة", "الإجراءات"]}
+          rows={reports.map((report) => {
+            const review = relationOne(report.review);
+            const business = review ? relationOne(review.business) : null;
+            const user = relationOne(report.user);
+            return [
+              business ? <Link className="font-black text-slate-950 hover:text-orange-600" href={`/businesses/${business.slug}`} key="business">{business.name}</Link> : "غير متاح",
+              user ? <div key="user"><p className="font-bold">{user.full_name}</p><p className="text-xs text-slate-500">@{user.username}</p></div> : "مستخدم محذوف",
+              <p className="max-w-xs whitespace-pre-wrap text-sm text-slate-700" key="reason">{report.reason}</p>,
+              <p className="max-w-xs whitespace-pre-wrap text-sm text-slate-500" key="review">{review?.comment ?? "بدون تعليق"}</p>,
+              <StatusBadge key="status" status={report.status}>{report.status}</StatusBadge>,
+              <div className="grid min-w-64 gap-2" key="actions">
+                <AdminActionForm action={moderateReviewReportAction}>
+                  <input name="reportId" type="hidden" value={report.id} />
+                  <input name="status" type="hidden" value="approved" />
+                  <input className="h-9 rounded-md border border-slate-200 px-2 text-xs" name="adminNote" placeholder="ملاحظة إدارية اختيارية" />
+                  <AdminSubmitButton className="h-9 rounded-md bg-green-700 px-3 text-xs font-black text-white disabled:opacity-70">قبول البلاغ</AdminSubmitButton>
+                </AdminActionForm>
+                <AdminActionForm action={moderateReviewReportAction}>
+                  <input name="reportId" type="hidden" value={report.id} />
+                  <input name="status" type="hidden" value="rejected" />
+                  <AdminSubmitButton className="h-9 rounded-md bg-slate-900 px-3 text-xs font-black text-white disabled:opacity-70">إغلاق</AdminSubmitButton>
+                </AdminActionForm>
+              </div>,
+            ];
+          })}
+        />
+      </div>
     </>
   );
 }

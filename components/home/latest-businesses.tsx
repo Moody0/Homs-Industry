@@ -5,7 +5,7 @@ import type { BusinessSummary } from "@/lib/data/marketplace";
 
 export function LatestBusinesses({ businesses }: { businesses: BusinessSummary[] }) {
   return (
-    <section className="order-1 lg:order-2">
+    <section className="order-2">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="inline-flex items-center gap-2 text-xl font-black text-slate-950"><Clock3 aria-hidden className="size-5 text-slate-950" /> أحدث المحلات</h2>
       </div>

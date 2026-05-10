@@ -14,16 +14,29 @@ export function HeroAdCard({ ad, variant = "desktop" }: HeroAdCardProps) {
     return (
       <Link
         aria-label={ad?.title ?? "إعلان ورشة الأمان"}
-        className="relative block h-[210px] w-full overflow-hidden rounded-xl border border-slate-800 bg-[#071018] shadow-lg shadow-black/20 min-[390px]:h-[220px]"
+        className="block w-full overflow-hidden rounded-lg border border-white/20 bg-white text-slate-950 shadow-xl shadow-black/25"
         href={ad?.link_url ?? "/categories/cars"}
       >
-        <Image
-          alt={ad?.alt_text ?? ad?.title ?? "إعلان ورشة الأمان"}
-          className="object-contain"
-          fill
-          sizes="100vw"
-          src={ad?.image_url ?? "/images/hero-ad.png"}
-        />
+        <div className="relative aspect-[16/9] bg-[#111827]">
+          <Image
+            alt={ad?.alt_text ?? ad?.title ?? "إعلان صناعي"}
+            className="object-cover"
+            fill
+            sizes="100vw"
+            src={ad?.image_url ?? "/images/hero-ad.png"}
+          />
+          <span className="absolute right-3 top-3 rounded-md bg-orange-500 px-2.5 py-1 text-xs font-black text-white">إعلان</span>
+        </div>
+        <div className="grid gap-2 px-4 py-3 text-right">
+          <div className="min-w-0">
+            <p className="line-clamp-1 text-lg font-black leading-tight">{ad?.title ?? "ورشة الأمان"}</p>
+            <p className="mt-1 line-clamp-1 text-sm font-bold text-slate-500">{ad?.description ?? "لتصليح السيارات"}</p>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-2xl font-black leading-none text-orange-500">20% <span className="text-sm text-orange-400">نزلة</span></p>
+            <span className="rounded-md bg-slate-950 px-3 py-1.5 text-xs font-black text-white">اعرف المزيد</span>
+          </div>
+        </div>
       </Link>
     );
   }

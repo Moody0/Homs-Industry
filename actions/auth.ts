@@ -19,26 +19,52 @@ export type AuthActionState = {
 const initialErrorState: AuthActionState = { message: "" };
 
 function registerErrorMessage(error: { code?: string; message?: string }) {
-  if (error.code === "user_already_exists" || error.message?.toLowerCase().includes("already registered")) {
+  const message = error.message?.toLowerCase() ?? "";
+
+  if (error.code === "user_already_exists" || message.includes("already registered")) {
     return "يوجد حساب مسجل بهذا البريد الإلكتروني مسبقاً.";
   }
 
-  if (error.message?.toLowerCase().includes("database")) {
-    return "تعذر إنشاء الملف الشخصي. تأكد أن اسم المستخدم أو رقم الهاتف غير مستخدمين مسبقاً.";
+  if (error.code === "email_address_invalid" || message.includes("invalid email")) {
+    return "أدخل بريداً إلكترونياً صحيحاً.";
   }
 
-  return "تعذر إنشاء الحساب. تأكد من البيانات وحاول مرة أخرى.";
+  if (error.code === "weak_password" || message.includes("weak password")) {
+    return "كلمة المرور ضعيفة. استخدم 8 أحرف على الأقل مع حروف وأرقام.";
+  }
+
+  if (error.code === "signup_disabled" || message.includes("signup is disabled")) {
+    return "إنشاء الحسابات غير متاح حالياً. حاول مرة أخرى لاحقاً.";
+  }
+
+  if (message.includes("rate limit") || message.includes("too many")) {
+    return "حاولت عدة مرات خلال وقت قصير. انتظر قليلاً ثم أعد المحاولة.";
+  }
+
+  if (message.includes("phone")) {
+    return "رقم الهاتف مستخدم مسبقاً أو غير صحيح.";
+  }
+
+  if (message.includes("username")) {
+    return "اسم المستخدم مستخدم مسبقاً أو غير صحيح.";
+  }
+
+  if (message.includes("duplicate") || message.includes("database")) {
+    return "يوجد حساب بنفس البريد أو اسم المستخدم أو رقم الهاتف.";
+  }
+
+  return "تعذر إنشاء الحساب الآن. جرّب بريداً أو اسم مستخدم أو رقم هاتف آخر، أو حاول بعد قليل.";
 }
 
 function loginErrorMessage(error: { code?: string; message?: string }) {
   const message = error.message?.toLowerCase() ?? "";
 
   if (error.code === "email_not_confirmed" || message.includes("email not confirmed")) {
-    return "لم يتم تأكيد البريد الإلكتروني بعد. افتح بريدك واضغط رابط التأكيد ثم حاول مرة أخرى.";
+    return "حسابك يحتاج تفعيل البريد الإلكتروني أولاً. افتح رسالة التفعيل في بريدك ثم حاول تسجيل الدخول مرة أخرى.";
   }
 
   if (error.code === "invalid_credentials" || message.includes("invalid login credentials")) {
-    return genericAuthError;
+    return "بيانات الدخول غير صحيحة. إذا أنشأت الحساب للتو، تأكد من تفعيل البريد الإلكتروني أولاً.";
   }
 
   return genericAuthError;
@@ -140,6 +166,14 @@ export async function registerAction(
     return { message: "اسم المستخدم مستخدم مسبقاً." };
   }
 
+  const { data: phoneAvailable, error: phoneError } = await supabase.rpc("is_phone_available", {
+    candidate_phone: phone,
+  });
+
+  if (!phoneError && phoneAvailable === false) {
+    return { message: "رقم الهاتف مستخدم مسبقاً." };
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
@@ -159,7 +193,7 @@ export async function registerAction(
 
   if (!data.session) {
     return {
-      message: "تم إنشاء الحساب. إذا كان تأكيد البريد مفعلاً في Supabase، افتح بريدك واضغط رابط التأكيد قبل تسجيل الدخول.",
+      message: "تم إنشاء الحساب بنجاح. أرسلنا لك رسالة تفعيل على بريدك الإلكتروني، افتحها واضغط رابط التفعيل قبل تسجيل الدخول.",
       success: true,
     };
   }

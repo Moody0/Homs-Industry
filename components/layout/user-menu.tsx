@@ -1,4 +1,4 @@
-import { LogOut, UserRound } from "lucide-react";
+import { LayoutDashboard, LogOut, UserRound } from "lucide-react";
 import { logoutAction } from "@/actions/auth";
 import { ButtonLink } from "@/components/ui/button";
 import { getCurrentProfile } from "@/lib/supabase/auth";
@@ -20,6 +20,10 @@ export async function UserMenu() {
       <ButtonLink className="border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white" href="/favorites" variant="outline">
         <UserRound aria-hidden className="size-4" />
         {profile.full_name}
+      </ButtonLink>
+      <ButtonLink className="border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white" href="/dashboard" variant="outline">
+        <LayoutDashboard aria-hidden className="size-4" />
+        لوحتي
       </ButtonLink>
       <form action={logoutAction}>
         <button

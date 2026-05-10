@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, Grid2X2, Megaphone, MessageSquareText, Settings, Store, Tags, Users } from "lucide-react";
+import { BarChart3, FileChartColumn, Grid2X2, Megaphone, MessageSquareText, Settings, Store, Tags, Users } from "lucide-react";
 
 const items = [
   { href: "/admin", label: "لوحة التحكم", icon: BarChart3 },
@@ -8,6 +8,7 @@ const items = [
   { href: "/admin/subcategories", label: "الفئات الفرعية", icon: Tags },
   { href: "/admin/ads", label: "الإعلانات", icon: Megaphone },
   { href: "/admin/reviews", label: "التقييمات", icon: MessageSquareText },
+  { href: "/admin/reports", label: "التقارير", icon: FileChartColumn },
   { href: "/admin/settings", label: "إعدادات الموقع", icon: Settings },
   { href: "/admin/users", label: "المستخدمون", icon: Users },
 ];

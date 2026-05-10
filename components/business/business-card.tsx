@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Factory, MapPin, Phone } from "lucide-react";
+import { CheckCircle2, Factory, MapPin, Phone, ShieldCheck, Sparkles } from "lucide-react";
 import { RatingStars } from "@/components/business/rating-stars";
-import type { BusinessSummary } from "@/lib/data/marketplace";
+import { formatDistance, type BusinessSummary } from "@/lib/data/marketplace";
 
 type BusinessCardProps = {
   business: BusinessSummary;
@@ -26,6 +26,11 @@ export function BusinessCard({ business }: BusinessCardProps) {
         ) : (
           <div className="absolute inset-0 bg-[linear-gradient(145deg,#1f2933,#071018)]" />
         )}
+        <div className="absolute right-3 top-3 flex flex-wrap gap-1">
+          {business.is_featured ? <span className="inline-flex items-center gap-1 rounded-md bg-orange-500 px-2 py-1 text-[11px] font-black text-white"><Sparkles aria-hidden className="size-3" />متميز</span> : null}
+          {business.is_verified ? <span className="inline-flex items-center gap-1 rounded-md bg-green-600 px-2 py-1 text-[11px] font-black text-white"><CheckCircle2 aria-hidden className="size-3" />موثق</span> : null}
+          {business.is_trusted ? <span className="inline-flex items-center gap-1 rounded-md bg-slate-950 px-2 py-1 text-[11px] font-black text-white"><ShieldCheck aria-hidden className="size-3" />موثوق</span> : null}
+        </div>
         <div className="absolute -bottom-7 left-4 grid size-14 place-items-center overflow-hidden rounded-full border-4 border-white bg-white shadow-md">
           {business.logo_url ? (
             <Image alt={`${business.name} logo`} className="object-cover" fill sizes="56px" src={business.logo_url} />
@@ -54,7 +59,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
           </span>
           <span className="inline-flex items-center gap-2">
             <MapPin aria-hidden className="size-4 text-slate-950" />
-            حمص - {business.area}
+            {formatDistance(business.distance_km) ? `${formatDistance(business.distance_km)} · ` : ""}حمص - {business.area}
           </span>
         </div>
       </div>
