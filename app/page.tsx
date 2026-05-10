@@ -73,7 +73,7 @@ export default async function Home() {
       <HeroSearch ad={ads[0]} hero={hero} />
       <AdsSlider ads={ads} />
       <CategoriesRow categories={categories} />
-      <Container className="grid items-start gap-6 pb-10 lg:grid-cols-[320px_1fr]">
+      <Container className="grid items-start gap-6 bg-slate-50 pb-10 lg:grid-cols-[320px_1fr]">
         <TopRatedList businesses={topRatedBusinesses} />
         <LatestBusinesses businesses={latestBusinesses} />
       </Container>

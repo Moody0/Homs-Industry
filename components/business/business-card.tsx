@@ -14,7 +14,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
       className="group block overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
       href={`/businesses/${business.slug}`}
     >
-      <div className="relative h-32 bg-[#111827]">
+      <div className="relative h-40 bg-[#111827] sm:h-44 md:h-36 xl:h-32">
         {business.cover_image_url ? (
           <Image
             alt={business.name}
@@ -43,11 +43,11 @@ export function BusinessCard({ business }: BusinessCardProps) {
             {business.subcategory?.name ?? business.category?.name ?? "خدمات صناعية"}
           </p>
         </div>
-        <div className="flex items-center justify-between text-xs text-slate-600">
+        <div className="flex items-center justify-between gap-3 text-xs text-slate-600">
           <RatingStars rating={business.rating_average} />
           <span>{business.reviews_count} تقييم</span>
         </div>
-        <div className="grid gap-2 border-t border-slate-100 pt-3 text-xs font-semibold text-slate-600">
+        <div className="grid gap-2 border-t border-slate-100 pt-3 text-xs font-semibold text-slate-600 sm:grid-cols-2 md:grid-cols-1">
           <span className="inline-flex items-center gap-2">
             <Phone aria-hidden className="size-4 text-slate-950" />
             {business.phone}

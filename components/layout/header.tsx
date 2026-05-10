@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, UserRound } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Logo } from "@/components/layout/logo";
@@ -17,7 +17,7 @@ const navItems = [
 export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#071018] text-white shadow-lg shadow-slate-950/10">
-      <Container className="flex h-20 items-center justify-between gap-6">
+      <Container className="flex h-16 items-center justify-between gap-4 md:h-20 md:gap-6">
         <Logo className="shrink-0" />
 
         <nav aria-label="التنقل الرئيسي" className="hidden items-center gap-1 lg:flex">
@@ -34,6 +34,12 @@ export function Header() {
             </Link>
           ))}
         </nav>
+
+        <div className="flex items-center gap-2 md:hidden">
+          <ButtonLink className="size-10 border-white/15 bg-transparent p-0 text-white hover:bg-white/10 hover:text-white" href="/login" variant="outline" aria-label="تسجيل دخول">
+            <UserRound aria-hidden className="size-5" />
+          </ButtonLink>
+        </div>
 
         <div className="hidden items-center gap-3 md:flex">
           <ButtonLink href="/add-business" size="sm">

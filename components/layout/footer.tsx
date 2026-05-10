@@ -45,7 +45,7 @@ export function Footer() {
             </span>
             <span className="inline-flex items-center gap-2">
               <Mail aria-hidden className="size-4 text-orange-500" />
-              info@sna3h-homs.local
+              info@Homs industry.local
             </span>
           </div>
         </div>
