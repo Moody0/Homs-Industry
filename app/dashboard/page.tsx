@@ -4,20 +4,46 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { AdminTable } from "@/components/admin/admin-table";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/supabase/auth";
+import { dbQuery } from "@/lib/db/postgres";
 
 type BusinessRow = {
   id: string;
   name: string;
   slug: string;
-  status: string;
+  status: "approved" | "pending" | "rejected" | string;
+  rejection_reason: string | null;
   is_featured: boolean;
   is_verified: boolean;
   is_trusted: boolean;
   rating_average: number | string;
   reviews_count: number;
   created_at: string;
+};
+
+type AnalyticsRow = {
+  call_clicks: number | string | null;
+  direction_clicks: number | string | null;
+  inquiries: number | string | null;
+  profile_clicks: number | string | null;
+  views: number | string | null;
+  whatsapp_clicks: number | string | null;
+};
+
+type FavoriteCountRow = {
+  count: number | string;
+};
+
+const statusLabels: Record<string, string> = {
+  approved: "منشور",
+  pending: "قيد المراجعة",
+  rejected: "مرفوض",
+};
+
+const statusDescriptions: Record<string, string> = {
+  approved: "محلك ظاهر للزوار ويمكنك متابعة الأداء والتقييمات.",
+  pending: "طلبك وصل للإدارة وينتظر المراجعة قبل النشر.",
+  rejected: "الطلب يحتاج تعديل أو استكمال قبل أن يظهر للزوار.",
 };
 
 function Stat({ icon: Icon, label, value }: { icon: typeof Store; label: string; value: number | string }) {
@@ -49,28 +75,44 @@ function TrustBadges({ business }: { business: BusinessRow }) {
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const supabase = await createClient();
+  const { rows: businessRows } = await dbQuery<BusinessRow>(
+    `select
+      id::text,
+      name,
+      slug,
+      status::text,
+      rejection_reason,
+      is_featured,
+      is_verified,
+      is_trusted,
+      rating_average,
+      reviews_count,
+      created_at::text
+    from public.businesses
+    where owner_id = $1::uuid
+    order by created_at desc`,
+    [user.id],
+  );
 
-  const { data: businesses } = await supabase
-    .from("businesses")
-    .select("id, name, slug, status, is_featured, is_verified, is_trusted, rating_average, reviews_count, created_at")
-    .eq("owner_id", user.id)
-    .order("created_at", { ascending: false });
-
-  const businessRows = (businesses ?? []) as BusinessRow[];
   const ids = businessRows.map((business) => business.id);
+  const pendingCount = businessRows.filter((business) => business.status === "pending").length;
+  const approvedCount = businessRows.filter((business) => business.status === "approved").length;
 
   const [analyticsResult, favoritesResult] = await Promise.all([
     ids.length
-      ? supabase
-          .from("business_analytics_daily")
-          .select("views, call_clicks, whatsapp_clicks, direction_clicks, profile_clicks, inquiries")
-          .in("business_id", ids)
-      : Promise.resolve({ data: [] }),
-    ids.length ? supabase.from("favorites").select("business_id").in("business_id", ids) : Promise.resolve({ data: [] }),
+      ? dbQuery<AnalyticsRow>(
+          `select views, call_clicks, whatsapp_clicks, direction_clicks, profile_clicks, inquiries
+          from public.business_analytics_daily
+          where business_id = any($1::uuid[])`,
+          [ids],
+        )
+      : Promise.resolve({ rows: [] as AnalyticsRow[] }),
+    ids.length
+      ? dbQuery<FavoriteCountRow>("select count(*)::int as count from public.favorites where business_id = any($1::uuid[])", [ids])
+      : Promise.resolve({ rows: [{ count: 0 }] as FavoriteCountRow[] }),
   ]);
 
-  const totals = (analyticsResult.data ?? []).reduce(
+  const totals = analyticsResult.rows.reduce(
     (acc, row) => ({
       clicks: acc.clicks + Number(row.call_clicks ?? 0) + Number(row.whatsapp_clicks ?? 0) + Number(row.direction_clicks ?? 0) + Number(row.profile_clicks ?? 0),
       inquiries: acc.inquiries + Number(row.inquiries ?? 0),
@@ -92,11 +134,13 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-6">
         <Stat icon={Store} label="عدد المحلات" value={businessRows.length} />
+        <Stat icon={CalendarDays} label="طلبات قيد المراجعة" value={pendingCount} />
+        <Stat icon={Star} label="محلات منشورة" value={approvedCount} />
         <Stat icon={Eye} label="مشاهدات" value={totals.views} />
         <Stat icon={MousePointerClick} label="نقرات وتواصل" value={totals.clicks} />
-        <Stat icon={Heart} label="إضافات للمفضلة" value={favoritesResult.data?.length ?? 0} />
+        <Stat icon={Heart} label="إضافات للمفضلة" value={favoritesResult.rows[0]?.count ?? 0} />
       </div>
 
       <Card className="hidden md:block">
@@ -108,13 +152,17 @@ export default async function DashboardPage() {
             emptyText="لا توجد محلات بعد."
             headers={["المحل", "الحالة", "الثقة", "التقييم", "التاريخ", "الإدارة"]}
             rows={businessRows.map((business) => [
-              <Link className="font-black text-slate-950 hover:text-orange-600" href={`/businesses/${business.slug}`} key="name">{business.name}</Link>,
-              <StatusBadge key="status" status={business.status}>{business.status}</StatusBadge>,
+              <div className="grid gap-1" key="name">
+                <Link className="font-black text-slate-950 hover:text-orange-600" href={`/dashboard/businesses/${business.id}`}>{business.name}</Link>
+                <span className="text-xs font-bold text-slate-500">{business.rejection_reason || statusDescriptions[business.status] || "تابع حالة المحل من هنا."}</span>
+              </div>,
+              <StatusBadge key="status" status={business.status}>{statusLabels[business.status] ?? business.status}</StatusBadge>,
               <TrustBadges business={business} key="trust" />,
               <span className="text-xs font-bold text-slate-700" key="rating">{Number(business.rating_average).toFixed(1)} / 5 · {business.reviews_count} تقييم</span>,
               new Date(business.created_at).toLocaleDateString("ar-SY"),
               <div className="flex flex-wrap gap-2" key="actions">
                 <ButtonLink href={`/dashboard/businesses/${business.id}`} size="sm" variant="outline">إدارة</ButtonLink>
+                {business.status === "approved" ? <ButtonLink href={`/businesses/${business.slug}`} size="sm" variant="ghost">عرض الصفحة</ButtonLink> : null}
                 <ButtonLink href={`/dashboard/businesses/${business.id}#reviews`} size="sm" variant="ghost"><MessageSquareText aria-hidden className="size-4" /> التقييمات</ButtonLink>
               </div>,
             ])}
@@ -135,13 +183,16 @@ export default async function DashboardPage() {
                 <div className="border-b border-slate-100 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <Link className="line-clamp-1 text-lg font-black text-slate-950" href={`/businesses/${business.slug}`}>
+                      <Link className="line-clamp-1 text-lg font-black text-slate-950" href={`/dashboard/businesses/${business.id}`}>
                         {business.name}
                       </Link>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <StatusBadge status={business.status}>{business.status}</StatusBadge>
+                        <StatusBadge status={business.status}>{statusLabels[business.status] ?? business.status}</StatusBadge>
                         <TrustBadges business={business} />
                       </div>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+                        {business.rejection_reason || statusDescriptions[business.status] || "تابع حالة المحل من هنا."}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -159,10 +210,14 @@ export default async function DashboardPage() {
 
                 <div className="grid grid-cols-2 gap-2 border-t border-slate-100 p-3">
                   <ButtonLink href={`/dashboard/businesses/${business.id}`} size="sm" variant="secondary">إدارة</ButtonLink>
-                  <ButtonLink href={`/dashboard/businesses/${business.id}#reviews`} size="sm" variant="outline">
-                    <MessageSquareText aria-hidden className="size-4" />
-                    التقييمات
-                  </ButtonLink>
+                  {business.status === "approved" ? (
+                    <ButtonLink href={`/businesses/${business.slug}`} size="sm" variant="outline">عرض الصفحة</ButtonLink>
+                  ) : (
+                    <ButtonLink href={`/dashboard/businesses/${business.id}#reviews`} size="sm" variant="outline">
+                      <MessageSquareText aria-hidden className="size-4" />
+                      التقييمات
+                    </ButtonLink>
+                  )}
                 </div>
               </article>
             ))}

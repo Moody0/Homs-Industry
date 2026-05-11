@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { AdminActionResult } from "@/lib/admin/action-result";
 import { adIdSchema, adUpsertSchema } from "@/lib/validation/admin";
 import {
@@ -56,7 +56,7 @@ export async function upsertAdAction(
   const imageUrl = imageUpload.url ?? parsed.data.existingImageUrl;
   if (!imageUrl) return failure("صورة الإعلان مطلوبة.");
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const payload = {
     alt_text: parsed.data.altText,
     business_id: parsed.data.businessId,
@@ -91,7 +91,7 @@ export async function deleteAdAction(
   const parsed = parseAdminForm(adIdSchema, { adId: text(formData, "adId") });
   if (parsed.error) return validationFailure(parsed.error);
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { error } = await supabase.from("ads").delete().eq("id", parsed.data.adId);
   if (error) return supabaseFailure(error, "تعذر حذف الإعلان");
 

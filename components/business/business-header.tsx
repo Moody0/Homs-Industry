@@ -1,8 +1,9 @@
 import Image from "next/image";
-import { BadgeCheck, CheckCircle2, MapPin, Share2, ShieldCheck, Star } from "lucide-react";
+import { BadgeCheck, CheckCircle2, MapPin, ShieldCheck, Star } from "lucide-react";
 import { ContactButtons } from "@/components/business/contact-buttons";
 import { FavoriteButton } from "@/components/business/favorite-button";
 import { RatingStars } from "@/components/business/rating-stars";
+import { ShareButton } from "@/components/business/share-button";
 import { Container } from "@/components/ui/container";
 import type { BusinessSummary } from "@/lib/data/marketplace";
 
@@ -31,17 +32,22 @@ export function BusinessHeader({ business, cover, isFavorite, isAuthenticated }:
             <h1 className="mt-2 text-3xl font-black leading-tight md:text-5xl">{business.name}</h1>
           </div>
           <p className="max-w-2xl text-sm leading-7 text-white/75">{business.description}</p>
-          <div className="grid gap-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm font-bold text-white/85 sm:flex sm:flex-wrap sm:items-center sm:gap-4 sm:bg-transparent sm:p-0 sm:ring-0">
-            <span className="inline-flex items-center gap-2"><RatingStars rating={business.rating_average} /> {Number(business.rating_average).toFixed(1)}</span>
+          <div className="inline-flex w-fit max-w-full flex-wrap items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 text-sm font-bold text-white/85 sm:gap-4">
+            <span className="inline-flex items-center gap-2"><RatingStars rating={business.rating_average} valueClassName="text-white/85" /></span>
             <span className="inline-flex items-center gap-2"><Star className="size-4 text-orange-500" /> {business.reviews_count} تقييم</span>
             <span className="inline-flex items-center gap-2"><MapPin className="size-4 text-orange-500" /> {business.address}</span>
           </div>
           <div className="grid gap-2 sm:flex sm:flex-wrap">
-            <ContactButtons businessId={business.id} phone={business.phone} whatsappPhone={business.whatsapp_phone} />
+            <ContactButtons
+              businessId={business.id}
+              buttonClassName="flex-1 px-2 sm:flex-none sm:px-4"
+              className="w-full sm:w-auto"
+              phone={business.phone}
+              whatsappPhone={business.whatsapp_phone}
+            >
+              <ShareButton className="flex-1 px-2 sm:flex-none sm:px-4" inline title={business.name} />
+            </ContactButtons>
             <FavoriteButton businessId={business.id} disabled={!isAuthenticated} isFavorite={isFavorite} />
-            <button className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-white/20 px-4 text-sm font-black text-white" type="button">
-              <Share2 aria-hidden className="size-4" /> مشاركة
-            </button>
           </div>
         </div>
       </Container>

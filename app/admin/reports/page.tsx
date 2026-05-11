@@ -5,7 +5,7 @@ import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminStatsCards } from "@/components/admin/admin-stats-cards";
 import { AdminTable } from "@/components/admin/admin-table";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type Relation<T> = T[] | T | null;
 
@@ -14,7 +14,7 @@ function one<T>(relation: Relation<T>) {
 }
 
 export default async function AdminReportsPage() {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const monthStart = new Date();
   monthStart.setDate(1);
   const monthStartIso = monthStart.toISOString().slice(0, 10);

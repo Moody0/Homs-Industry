@@ -4,26 +4,23 @@ import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { businessListSelect, normalizeBusinesses } from "@/lib/data/marketplace";
+import { dbQuery } from "@/lib/db/postgres";
 import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
-type FavoriteRow = {
-  business: unknown[] | unknown | null;
-  business_id: string;
-};
-
 export default async function FavoritesPage() {
   const user = await requireUser();
+  const favoriteResult = await dbQuery<{ business_id: string }>(
+    "select business_id::text from public.favorites where user_id = $1::uuid order by created_at desc",
+    [user.id],
+  );
+  const favoriteIds = favoriteResult.rows.map((row) => row.business_id);
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("favorites")
-    .select(`business_id, business:businesses(${businessListSelect})`)
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  const rows = (data ?? []) as FavoriteRow[];
-  const businesses = normalizeBusinesses(
-    rows.map((row) => (Array.isArray(row.business) ? row.business[0] : row.business)).filter(Boolean),
+  const { data } = favoriteIds.length
+    ? await supabase.from("businesses").select(businessListSelect).in("id", favoriteIds)
+    : { data: [] };
+  const businesses = normalizeBusinesses(data).sort(
+    (a, b) => favoriteIds.indexOf(a.id) - favoriteIds.indexOf(b.id),
   );
 
   return (

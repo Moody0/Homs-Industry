@@ -5,7 +5,7 @@ import { AdminTable } from "@/components/admin/admin-table";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Pagination } from "@/components/ui/pagination";
 import { adminPageSize, getAdminRange, getTotalPages, parseAdminPage } from "@/lib/admin/pagination";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type AdminUsersPageProps = {
   searchParams: Promise<Record<string, string | undefined>>;
@@ -19,7 +19,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
   const params = await searchParams;
   const page = parseAdminPage(params.page);
   const range = getAdminRange(page);
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   let query = supabase
     .from("profiles")
     .select("id, full_name, username, phone, role, created_at", { count: "exact" })

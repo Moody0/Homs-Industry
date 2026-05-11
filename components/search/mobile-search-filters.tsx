@@ -72,7 +72,7 @@ export function MobileSearchFilters({ areas, categories, params, showPriceFilter
 
               <select className={fieldClass} name="category" defaultValue={params.category ?? ""}>
                 <option value="">كل الفئات</option>
-                {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                {categories.map((category) => <option key={category.id} value={category.slug}>{category.name}</option>)}
               </select>
               <select className={fieldClass} name="area" defaultValue={params.area ?? ""}>
                 <option value="">كل المناطق</option>

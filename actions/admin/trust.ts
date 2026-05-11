@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { dbQuery } from "@/lib/db/postgres";
 import type { AdminActionResult } from "@/lib/admin/action-result";
 import { success, supabaseFailure } from "./_helpers";
 
@@ -11,7 +12,7 @@ function text(formData: FormData, name: string) {
   return typeof value === "string" ? value : "";
 }
 
-async function revalidateBusiness(supabase: Awaited<ReturnType<typeof createClient>>, businessId: string) {
+async function revalidateBusiness(supabase: Awaited<ReturnType<typeof createAdminClient>>, businessId: string) {
   const { data } = await supabase.from("businesses").select("slug").eq("id", businessId).maybeSingle();
   revalidatePath("/admin/businesses");
   revalidatePath("/admin/reports");
@@ -25,7 +26,7 @@ export async function toggleBusinessVerifiedAction(
   await requireAdmin();
   const businessId = text(formData, "businessId");
   const isVerified = text(formData, "isVerified") === "true";
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { error } = await supabase.from("businesses").update({ is_verified: !isVerified }).eq("id", businessId);
   if (error) return supabaseFailure(error, "تعذر تعديل التوثيق");
   await revalidateBusiness(supabase, businessId);
@@ -39,7 +40,7 @@ export async function toggleBusinessTrustedAction(
   await requireAdmin();
   const businessId = text(formData, "businessId");
   const isTrusted = text(formData, "isTrusted") === "true";
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { error } = await supabase.from("businesses").update({ is_trusted: !isTrusted }).eq("id", businessId);
   if (error) return supabaseFailure(error, "تعذر تعديل الثقة");
   await revalidateBusiness(supabase, businessId);
@@ -55,7 +56,7 @@ export async function moderateCertificateAction(
   const status = text(formData, "status");
   if (!["approved", "rejected"].includes(status)) return { success: false, message: "حالة الشهادة غير صالحة" };
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data: certificate } = await supabase
     .from("business_certificates")
     .select("business_id")
@@ -86,13 +87,15 @@ export async function moderateReviewReportAction(
   const status = text(formData, "status");
   if (!["approved", "rejected"].includes(status)) return { success: false, message: "حالة البلاغ غير صالحة" };
 
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("review_reports")
-    .update({ admin_note: text(formData, "adminNote") || null, status })
-    .eq("id", reportId);
-
-  if (error) return supabaseFailure(error, "تعذر تعديل البلاغ");
+  try {
+    await dbQuery(
+      "update public.review_reports set admin_note = $1, status = $2, updated_at = now() where id = $3::uuid",
+      [text(formData, "adminNote") || null, status, reportId],
+    );
+  } catch (error) {
+    console.error("Admin review report moderation failed:", error);
+    return { success: false, message: "تعذر تعديل البلاغ" };
+  }
   revalidatePath("/admin/reviews");
   return success(status === "approved" ? "تم قبول البلاغ." : "تم إغلاق البلاغ.");
 }

@@ -15,6 +15,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { businessListSelect, languageLabels, normalizeBusinesses, paymentMethodLabels, priceRangeLabels, serviceModeLabels } from "@/lib/data/marketplace";
+import { dbQuery } from "@/lib/db/postgres";
 import { getCurrentProfile, getCurrentUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -109,7 +110,12 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
       supabase.from("business_services").select("id, name, description").eq("business_id", business.id).order("sort_order"),
       supabase.from("business_products").select("id, name, description, price, image_url").eq("business_id", business.id).order("sort_order"),
       supabase.from("reviews").select("id, user_id, rating, quality_rating, service_rating, value_rating, comment, created_at").eq("business_id", business.id).eq("status", "approved").order("created_at", { ascending: false }),
-      user ? supabase.from("favorites").select("business_id").eq("business_id", business.id).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
+      user
+        ? dbQuery<{ business_id: string }>(
+            "select business_id::text from public.favorites where business_id = $1::uuid and user_id = $2::uuid limit 1",
+            [business.id, user.id],
+          )
+        : Promise.resolve({ rows: [] }),
       user ? supabase.from("reviews").select("rating, quality_rating, service_rating, value_rating, comment").eq("business_id", business.id).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
       supabase.from("review_replies").select("review_id, reply, created_at").eq("business_id", business.id),
       supabase.from("business_certificates").select("id, title, description, file_url").eq("business_id", business.id).eq("status", "approved").order("created_at", { ascending: false }),
@@ -154,7 +160,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
         business={business}
         cover={cover}
         isAuthenticated={Boolean(user)}
-        isFavorite={Boolean(favoriteResult.data)}
+        isFavorite={favoriteResult.rows.length > 0}
       />
 
       <Container className="grid gap-5 pb-28 pt-5 sm:py-8 lg:grid-cols-[1fr_340px] lg:gap-6">
@@ -280,24 +286,52 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                       <p className="mt-2 text-sm leading-7 text-slate-700">{review.comment || "بدون تعليق"}</p>
                       <p className="mt-1 text-xs text-slate-400"><Clock3 className="inline size-3" /> {new Date(review.created_at).toLocaleDateString("ar-SY")}</p>
                       {reply ? <div className="mt-3 rounded-lg bg-orange-50 p-3 text-sm leading-7 text-orange-900"><strong>رد صاحب المحل:</strong> {reply.reply}</div> : null}
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-2">
                         {user ? (
-                          <form action={toggleHelpfulReviewAction}>
-                            <input name="reviewId" type="hidden" value={review.id} />
-                            <input name="businessSlug" type="hidden" value={business.slug} />
-                            <button className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-black text-slate-700" type="submit">
-                              <ThumbsUp className="size-4" /> مفيد {helpfulCounts.get(review.id) ?? 0}{helpfulByUser.has(review.id) ? " ✓" : ""}
-                            </button>
-                          </form>
-                        ) : <span className="text-xs font-bold text-slate-500">مفيد {helpfulCounts.get(review.id) ?? 0}</span>}
-                        {user ? (
-                          <form action={reportReviewAction} className="flex gap-2">
-                            <input name="reviewId" type="hidden" value={review.id} />
-                            <input name="businessSlug" type="hidden" value={business.slug} />
-                            <input className="h-9 rounded-lg border border-slate-200 px-3 text-xs" name="reason" placeholder="سبب البلاغ" />
-                            <button className="inline-flex h-9 items-center gap-2 rounded-lg border border-red-100 px-3 text-xs font-black text-red-700" type="submit"><TriangleAlert className="size-4" /> بلاغ</button>
-                          </form>
-                        ) : null}
+                          <div className="grid gap-2 sm:flex sm:items-start sm:justify-between">
+                            <form action={toggleHelpfulReviewAction}>
+                              <input name="reviewId" type="hidden" value={review.id} />
+                              <input name="businessSlug" type="hidden" value={business.slug} />
+                              <button
+                                className={helpfulByUser.has(review.id)
+                                  ? "inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-3 text-xs font-black text-orange-700 transition hover:bg-orange-100 sm:w-auto"
+                                  : "inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-black text-slate-700 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 sm:w-auto"}
+                                type="submit"
+                              >
+                                <ThumbsUp className={helpfulByUser.has(review.id) ? "size-4 fill-orange-500 text-orange-500" : "size-4"} />
+                                {helpfulByUser.has(review.id) ? "أعجبك" : "مفيد"}
+                                <span className="rounded-full bg-white px-2 py-0.5 text-[11px] text-slate-600 ring-1 ring-slate-200">{helpfulCounts.get(review.id) ?? 0}</span>
+                              </button>
+                            </form>
+
+                            <details className="group rounded-lg border border-transparent sm:min-w-80">
+                              <summary className="flex h-10 cursor-pointer list-none items-center justify-center gap-2 rounded-lg border border-red-100 bg-white px-3 text-xs font-black text-red-700 transition hover:bg-red-50 group-open:border-red-200 group-open:bg-red-50 [&::-webkit-details-marker]:hidden">
+                                <TriangleAlert className="size-4" />
+                                إبلاغ عن التقييم
+                              </summary>
+                              <form action={reportReviewAction} className="mt-2 grid gap-2 rounded-lg border border-red-100 bg-white p-2 sm:grid-cols-[1fr_auto]">
+                                <input name="reviewId" type="hidden" value={review.id} />
+                                <input name="businessSlug" type="hidden" value={business.slug} />
+                                <input
+                                  className="h-10 min-w-0 rounded-lg border border-slate-200 px-3 text-xs font-bold outline-none transition placeholder:text-slate-400 focus:border-red-300 focus:ring-4 focus:ring-red-500/10"
+                                  minLength={3}
+                                  name="reason"
+                                  placeholder="اكتب سبب البلاغ"
+                                  required
+                                />
+                                <button className="inline-flex h-10 items-center justify-center rounded-lg bg-red-600 px-4 text-xs font-black text-white transition hover:bg-red-700" type="submit">إرسال</button>
+                              </form>
+                            </details>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-black text-slate-600 ring-1 ring-slate-200">
+                              <ThumbsUp className="size-4" />
+                              مفيد {helpfulCounts.get(review.id) ?? 0}
+                            </span>
+                            <ButtonLink className="h-9 px-3 text-xs" href="/login" size="sm" variant="outline">سجّل الدخول للتفاعل</ButtonLink>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

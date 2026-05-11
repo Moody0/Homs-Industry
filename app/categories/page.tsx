@@ -1,6 +1,7 @@
-import { ArrowLeft, Grid2X2, Search } from "lucide-react";
+import { ArrowLeft, Grid2X2 } from "lucide-react";
 import Link from "next/link";
 import { CategoryIcon } from "@/components/home/category-card";
+import { SearchSuggestionsInput } from "@/components/search/search-suggestions-input";
 import { Container } from "@/components/ui/container";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveCategories } from "@/lib/data/marketplace";
@@ -11,7 +12,7 @@ export default async function CategoriesPage() {
 
   return (
     <Container className="pb-24 pt-5 sm:py-10">
-      <section className="mb-6 overflow-hidden rounded-lg bg-[#071018] p-5 text-white shadow-sm sm:p-6 md:p-8">
+      <section className="relative z-20 mb-6 rounded-lg bg-[#071018] p-5 text-white shadow-sm sm:p-6 md:p-8">
         <div className="grid gap-5 lg:grid-cols-[1fr_220px] lg:items-end">
           <div className="max-w-3xl">
             <p className="inline-flex items-center gap-2 text-sm font-black text-orange-400">
@@ -20,12 +21,7 @@ export default async function CategoriesPage() {
             </p>
             <h1 className="mt-3 text-2xl font-black leading-tight sm:text-3xl md:text-4xl">استعرض خدمات حمص حسب الفئة</h1>
             <p className="mt-2 text-sm leading-7 text-white/70">ابدأ من الفئة المناسبة ثم انتقل إلى المحلات والخدمات الأقرب لاحتياجك.</p>
-            <form action="/search" className="mt-5 grid max-w-2xl overflow-hidden rounded-lg bg-white text-slate-950 shadow-lg shadow-black/15 sm:grid-cols-[1fr_56px]">
-              <input className="h-12 bg-transparent px-4 text-sm outline-none" name="q" placeholder="ابحث عن فئة أو خدمة" />
-              <button className="grid h-12 place-items-center bg-orange-500 text-white" type="submit">
-                <Search aria-hidden className="size-5" />
-              </button>
-            </form>
+            <SearchSuggestionsInput className="mt-5 max-w-2xl shadow-lg shadow-black/15" inputPlaceholder="ابحث عن فئة أو خدمة" />
           </div>
           <div className="grid grid-cols-2 gap-2 rounded-lg border border-white/10 bg-white/5 p-3 text-center">
             <div>

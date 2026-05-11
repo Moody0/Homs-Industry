@@ -4,9 +4,9 @@ import { DashboardActionForm, DashboardSubmitButton } from "@/components/dashboa
 import { RatingStars } from "@/components/business/rating-stars";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/supabase/auth";
 import { languageLabels, paymentMethodLabels, priceRangeLabels, serviceModeLabels } from "@/lib/data/marketplace";
+import { dbQuery } from "@/lib/db/postgres";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -17,6 +17,66 @@ type BusinessHour = {
   opens_at: string | null;
   closes_at: string | null;
   is_closed: boolean;
+};
+
+type ServiceRow = {
+  description: string | null;
+  name: string;
+  sort_order: number;
+};
+
+type ProductRow = {
+  description: string | null;
+  name: string;
+  price: number | string | null;
+  sort_order: number;
+};
+
+type ImageRow = {
+  alt_text: string | null;
+  image_url: string;
+  sort_order: number;
+};
+
+type CertificateRow = {
+  description: string | null;
+  file_url: string;
+  id: string;
+  status: string;
+  title: string;
+};
+
+type ProjectRow = {
+  after_image_url: string | null;
+  before_image_url: string | null;
+  description: string | null;
+  sort_order: number;
+  title: string | null;
+};
+
+type ReviewRow = {
+  comment: string | null;
+  created_at: string;
+  id: string;
+  quality_rating: number | null;
+  rating: number;
+  service_rating: number | null;
+  value_rating: number | null;
+};
+
+type ReplyRow = {
+  reply: string;
+  review_id: string;
+};
+
+type AnalyticsDailyRow = {
+  call_clicks: number | string | null;
+  direction_clicks: number | string | null;
+  event_date: string;
+  inquiries: number | string | null;
+  profile_clicks: number | string | null;
+  views: number | string | null;
+  whatsapp_clicks: number | string | null;
 };
 
 type BusinessRow = {
@@ -43,6 +103,12 @@ type BusinessRow = {
   status: string;
 };
 
+const statusLabels: Record<string, string> = {
+  approved: "منشور",
+  pending: "قيد المراجعة",
+  rejected: "مرفوض",
+};
+
 const dayNames = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
 const inputClass = "h-11 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-orange-500";
@@ -59,15 +125,37 @@ function lineJoin<T>(rows: T[], build: (row: T) => string) {
 export default async function OwnerBusinessPage({ params }: PageProps) {
   const { id } = await params;
   const user = await requireUser();
-  const supabase = await createClient();
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id, name, slug, description, phone, whatsapp_phone, address, area, latitude, longitude, price_range, service_modes, languages, payment_methods, years_experience, owner_bio, team_info, brochure_url, rating_average, reviews_count, status")
-    .eq("id", id)
-    .eq("owner_id", user.id)
-    .maybeSingle();
+  const { rows: businessRows } = await dbQuery<BusinessRow>(
+    `select
+      id::text,
+      name,
+      slug,
+      description,
+      phone,
+      whatsapp_phone,
+      address,
+      area,
+      latitude,
+      longitude,
+      price_range,
+      service_modes,
+      languages,
+      payment_methods,
+      years_experience,
+      owner_bio,
+      team_info,
+      brochure_url,
+      rating_average,
+      reviews_count,
+      status::text
+    from public.businesses
+    where id = $1::uuid and owner_id = $2::uuid
+    limit 1`,
+    [id, user.id],
+  );
 
+  const business = businessRows[0];
   if (!business) notFound();
 
   const [
@@ -81,22 +169,49 @@ export default async function OwnerBusinessPage({ params }: PageProps) {
     repliesResult,
     analyticsResult,
   ] = await Promise.all([
-    supabase.from("business_hours").select("day_of_week, opens_at, closes_at, is_closed").eq("business_id", id).order("day_of_week"),
-    supabase.from("business_services").select("name, description, sort_order").eq("business_id", id).order("sort_order"),
-    supabase.from("business_products").select("name, price, description, sort_order").eq("business_id", id).order("sort_order"),
-    supabase.from("business_images").select("image_url, alt_text, sort_order").eq("business_id", id).order("sort_order"),
-    supabase.from("business_certificates").select("id, title, description, file_url, status").eq("business_id", id).order("created_at", { ascending: false }),
-    supabase.from("business_project_images").select("title, before_image_url, after_image_url, description, sort_order").eq("business_id", id).order("sort_order"),
-    supabase.from("reviews").select("id, rating, quality_rating, service_rating, value_rating, comment, created_at").eq("business_id", id).eq("status", "approved").order("created_at", { ascending: false }),
-    supabase.from("review_replies").select("review_id, reply").eq("business_id", id),
-    supabase.from("business_analytics_daily").select("event_date, views, call_clicks, whatsapp_clicks, direction_clicks, profile_clicks, inquiries").eq("business_id", id).order("event_date", { ascending: false }).limit(30),
+    dbQuery<BusinessHour>(
+      "select day_of_week, opens_at::text, closes_at::text, is_closed from public.business_hours where business_id = $1::uuid order by day_of_week",
+      [id],
+    ),
+    dbQuery<ServiceRow>(
+      "select name, description, sort_order from public.business_services where business_id = $1::uuid order by sort_order",
+      [id],
+    ),
+    dbQuery<ProductRow>(
+      "select name, price, description, sort_order from public.business_products where business_id = $1::uuid order by sort_order",
+      [id],
+    ),
+    dbQuery<ImageRow>(
+      "select image_url, alt_text, sort_order from public.business_images where business_id = $1::uuid order by sort_order",
+      [id],
+    ),
+    dbQuery<CertificateRow>(
+      "select id::text, title, description, file_url, status::text from public.business_certificates where business_id = $1::uuid order by created_at desc",
+      [id],
+    ),
+    dbQuery<ProjectRow>(
+      "select title, before_image_url, after_image_url, description, sort_order from public.business_project_images where business_id = $1::uuid order by sort_order",
+      [id],
+    ),
+    dbQuery<ReviewRow>(
+      "select id::text, rating, quality_rating, service_rating, value_rating, comment, created_at::text from public.reviews where business_id = $1::uuid and status = 'approved' order by created_at desc",
+      [id],
+    ),
+    dbQuery<ReplyRow>(
+      "select review_id::text, reply from public.review_replies where business_id = $1::uuid",
+      [id],
+    ),
+    dbQuery<AnalyticsDailyRow>(
+      "select event_date::text, views, call_clicks, whatsapp_clicks, direction_clicks, profile_clicks, inquiries from public.business_analytics_daily where business_id = $1::uuid order by event_date desc limit 30",
+      [id],
+    ),
   ]);
 
-  const typedBusiness = business as BusinessRow;
-  const hours = (hoursResult.data ?? []) as BusinessHour[];
+  const typedBusiness = business;
+  const hours = hoursResult.rows;
   const hoursByDay = new Map(hours.map((hour) => [hour.day_of_week, hour]));
-  const replies = new Map((repliesResult.data ?? []).map((reply) => [reply.review_id, reply.reply]));
-  const analyticsTotals = (analyticsResult.data ?? []).reduce(
+  const replies = new Map(repliesResult.rows.map((reply) => [reply.review_id, reply.reply]));
+  const analyticsTotals = analyticsResult.rows.reduce(
     (acc, row) => ({
       clicks: acc.clicks + Number(row.call_clicks ?? 0) + Number(row.whatsapp_clicks ?? 0) + Number(row.direction_clicks ?? 0) + Number(row.profile_clicks ?? 0),
       inquiries: acc.inquiries + Number(row.inquiries ?? 0),
@@ -105,11 +220,11 @@ export default async function OwnerBusinessPage({ params }: PageProps) {
     { clicks: 0, inquiries: 0, views: 0 },
   );
 
-  const serviceLines = lineJoin(servicesResult.data ?? [], (service) => `${service.name}${service.description ? ` | ${service.description}` : ""}`);
-  const productLines = lineJoin(productsResult.data ?? [], (product) => `${product.name}${product.price ? ` | ${product.price}` : " | "}${product.description ? ` | ${product.description}` : ""}`);
-  const imageLines = lineJoin(imagesResult.data ?? [], (image) => `${image.image_url}${image.alt_text ? ` | ${image.alt_text}` : ""}`);
-  const certificateLines = lineJoin(certificatesResult.data ?? [], (certificate) => `${certificate.title} | ${certificate.file_url}${certificate.description ? ` | ${certificate.description}` : ""}`);
-  const projectLines = lineJoin(projectsResult.data ?? [], (project) => `${project.title ?? ""} | ${project.before_image_url ?? ""} | ${project.after_image_url ?? ""}${project.description ? ` | ${project.description}` : ""}`);
+  const serviceLines = lineJoin(servicesResult.rows, (service) => `${service.name}${service.description ? ` | ${service.description}` : ""}`);
+  const productLines = lineJoin(productsResult.rows, (product) => `${product.name}${product.price ? ` | ${product.price}` : " | "}${product.description ? ` | ${product.description}` : ""}`);
+  const imageLines = lineJoin(imagesResult.rows, (image) => `${image.image_url}${image.alt_text ? ` | ${image.alt_text}` : ""}`);
+  const certificateLines = lineJoin(certificatesResult.rows, (certificate) => `${certificate.title} | ${certificate.file_url}${certificate.description ? ` | ${certificate.description}` : ""}`);
+  const projectLines = lineJoin(projectsResult.rows, (project) => `${project.title ?? ""} | ${project.before_image_url ?? ""} | ${project.after_image_url ?? ""}${project.description ? ` | ${project.description}` : ""}`);
 
   return (
     <div className="space-y-6">
@@ -117,11 +232,11 @@ export default async function OwnerBusinessPage({ params }: PageProps) {
         <div>
           <h1 className="text-3xl font-black text-slate-950">{typedBusiness.name}</h1>
           <p className="mt-1 text-sm font-semibold text-slate-500">
-            الحالة: {typedBusiness.status} · {Number(typedBusiness.rating_average).toFixed(1)} / 5 · {typedBusiness.reviews_count} تقييم
+            الحالة: {statusLabels[typedBusiness.status] ?? typedBusiness.status} · {Number(typedBusiness.rating_average).toFixed(1)} / 5 · {typedBusiness.reviews_count} تقييم
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <ButtonLink href={`/businesses/${typedBusiness.slug}`} variant="outline">عرض الصفحة</ButtonLink>
+          {typedBusiness.status === "approved" ? <ButtonLink href={`/businesses/${typedBusiness.slug}`} variant="outline">عرض الصفحة</ButtonLink> : null}
           <ButtonLink href="/dashboard" variant="ghost">رجوع</ButtonLink>
         </div>
       </div>
@@ -226,9 +341,9 @@ export default async function OwnerBusinessPage({ params }: PageProps) {
             <textarea className={textareaClass} name="projects" defaultValue={projectLines} placeholder="كل مشروع بسطر: العنوان | صورة قبل | صورة بعد | وصف اختياري" />
             <DashboardSubmitButton>حفظ ملفات الثقة</DashboardSubmitButton>
           </DashboardActionForm>
-          {certificatesResult.data?.length ? (
+          {certificatesResult.rows.length ? (
             <div className="mt-4 grid gap-2">
-              {certificatesResult.data.map((certificate) => <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700" key={certificate.id}>{certificate.title}: {certificate.status}</p>)}
+              {certificatesResult.rows.map((certificate) => <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700" key={certificate.id}>{certificate.title}: {certificate.status}</p>)}
             </div>
           ) : null}
         </CardContent>
@@ -237,7 +352,7 @@ export default async function OwnerBusinessPage({ params }: PageProps) {
       <Card id="reviews">
         <CardHeader><h2 className="text-xl font-black">التقييمات والردود</h2></CardHeader>
         <CardContent className="grid gap-4">
-          {(reviewsResult.data ?? []).length ? (reviewsResult.data ?? []).map((review) => (
+          {reviewsResult.rows.length ? reviewsResult.rows.map((review) => (
             <div className="rounded-lg border border-slate-200 p-4" key={review.id}>
               <RatingStars rating={review.rating} />
               <p className="mt-2 text-sm leading-7 text-slate-700">{review.comment || "بدون تعليق"}</p>

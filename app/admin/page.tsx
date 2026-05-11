@@ -2,10 +2,10 @@ import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminStatsCards } from "@/components/admin/admin-stats-cards";
 import { AdminTable } from "@/components/admin/admin-table";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function AdminPage() {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const today = new Date().toISOString().slice(0, 10);
   const [users, businesses, pendingBusinesses, reviews, activeAds, recentBusinesses] = await Promise.all([
     supabase.from("profiles").select("id", { count: "exact", head: true }),

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { AdminActionResult } from "@/lib/admin/action-result";
 import {
   businessIdSchema,
@@ -28,7 +28,7 @@ export async function approveBusinessAction(
   const parsed = parseAdminForm(businessIdSchema, { businessId: text(formData, "businessId") });
   if (parsed.error) return validationFailure(parsed.error);
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { error } = await supabase
     .from("businesses")
     .update({
@@ -57,7 +57,7 @@ export async function rejectBusinessAction(
   });
   if (parsed.error) return validationFailure(parsed.error);
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { error } = await supabase
     .from("businesses")
     .update({
@@ -86,7 +86,7 @@ export async function toggleBusinessFeaturedAction(
   });
   if (parsed.error) return validationFailure(parsed.error);
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { error } = await supabase
     .from("businesses")
     .update({ is_featured: !parsed.data.isFeatured })
@@ -113,7 +113,7 @@ export async function updateBusinessAction(
   });
   if (parsed.error) return validationFailure(parsed.error);
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { error } = await supabase
     .from("businesses")
     .update({
@@ -139,7 +139,7 @@ export async function deleteBusinessAction(
   const parsed = parseAdminForm(businessIdSchema, { businessId: text(formData, "businessId") });
   if (parsed.error) return validationFailure(parsed.error);
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { error } = await supabase.from("businesses").delete().eq("id", parsed.data.businessId);
   if (error) return supabaseFailure(error, "تعذر حذف المحل");
 

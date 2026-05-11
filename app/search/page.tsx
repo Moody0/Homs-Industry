@@ -35,7 +35,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const lng = params.lng ? Number(params.lng) : null;
   const hasLocation = Number.isFinite(lat) && Number.isFinite(lng);
 
-  const selectedCategory = categories.find((category) => category.id === params.category);
+  const selectedCategory = categories.find((category) => category.slug === params.category || category.id === params.category);
+  const normalizedParams = {
+    ...params,
+    category: selectedCategory?.slug ?? params.category,
+  };
   const { data: rpcResults, error: searchV2Error } = await supabase.rpc("search_businesses_v2", {
     area_filter: params.area || null,
     category_slug: selectedCategory?.slug ?? null,
@@ -94,27 +98,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   return (
     <Container className="pb-24 pt-5 sm:py-10">
-      <section className="mb-5 overflow-hidden rounded-lg bg-[#071018] p-5 text-white shadow-sm sm:p-6 md:p-8">
-        <div className="grid gap-5 lg:grid-cols-[1fr_220px] lg:items-end">
+      <section className="relative z-20 mb-5 rounded-lg bg-[#071018] p-5 text-white shadow-sm sm:p-6 md:p-8">
+        <div className="grid gap-5">
           <div>
             <p className="text-sm font-black text-orange-400">اكتشف الخدمات القريبة منك</p>
             <h1 className="mt-2 text-2xl font-black leading-tight sm:text-3xl md:text-4xl">البحث في صناعة حمص</h1>
             <p className="mt-2 max-w-2xl text-sm leading-7 text-white/70">ابحث باسم المحل، الخدمة، المنتج، المنطقة، أو الفئة.</p>
             <div className="mt-5 max-w-2xl"><SearchSuggestionsInput defaultValue={query} /></div>
-          </div>
-          <div className="grid grid-cols-3 gap-2 rounded-lg border border-white/10 bg-white/5 p-3 text-center">
-            <div>
-              <p className="text-2xl font-black text-white">{businesses.length}</p>
-              <p className="text-[11px] font-bold text-white/60">نتيجة</p>
-            </div>
-            <div>
-              <p className="text-2xl font-black text-white">{categories.length}</p>
-              <p className="text-[11px] font-bold text-white/60">فئة</p>
-            </div>
-            <div>
-              <p className="text-2xl font-black text-white">{areas.length}</p>
-              <p className="text-[11px] font-bold text-white/60">منطقة</p>
-            </div>
           </div>
         </div>
         {activeFilters.length > 0 ? (
@@ -125,7 +115,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         ) : null}
       </section>
 
-      <SearchFilters areas={areas} categories={categories} params={params} showPriceFilter />
+      <SearchFilters areas={areas} categories={categories} params={normalizedParams} showPriceFilter />
 
       {hasMap ? (
         <>

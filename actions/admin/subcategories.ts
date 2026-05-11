@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { AdminActionResult } from "@/lib/admin/action-result";
 import { subcategoryIdSchema, subcategoryUpsertSchema } from "@/lib/validation/admin";
 import {
@@ -35,7 +35,7 @@ export async function upsertSubcategoryAction(
   const categoryMissing = await ensureRecordExists("categories", parsed.data.categoryId, "الفئة الرئيسية المحددة غير موجودة.");
   if (categoryMissing) return categoryMissing;
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const payload = {
     category_id: parsed.data.categoryId,
     description: parsed.data.description,
@@ -64,7 +64,7 @@ export async function deleteSubcategoryAction(
   const parsed = parseAdminForm(subcategoryIdSchema, { subcategoryId: text(formData, "subcategoryId") });
   if (parsed.error) return validationFailure(parsed.error);
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { error } = await supabase.from("subcategories").delete().eq("id", parsed.data.subcategoryId);
   if (error) return supabaseFailure(error, "تعذر حذف الفئة الفرعية. تأكد من عدم ارتباطها بمحلات");
 

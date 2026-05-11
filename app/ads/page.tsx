@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, CalendarDays, Megaphone, Search, Sparkles, Store, Tags } from "lucide-react";
+import { ArrowLeft, CalendarDays, Megaphone, Sparkles, Store, Tags } from "lucide-react";
+import { SearchSuggestionsInput } from "@/components/search/search-suggestions-input";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
@@ -9,7 +10,7 @@ import { fallbackHomeAds, firstRelation } from "@/lib/data/marketplace";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
-  title: "الإعلانات والعروض | صنعة حمص",
+  title: "الإعلانات والعروض | صناعة حمص",
   description: "اكتشف أحدث إعلانات وعروض المحلات والخدمات الصناعية في حمص.",
 };
 
@@ -66,7 +67,7 @@ function adContext(ad: AdRow) {
   const category = firstRelation(ad.category);
   if (category?.name) return category.name;
 
-  return "صنعة حمص";
+  return "صناعة حمص";
 }
 
 function dateRange(ad: AdRow) {
@@ -127,7 +128,7 @@ export default async function AdsPage({ searchParams }: AdsPageProps) {
   return (
     <main className="bg-slate-50 pb-24">
       <section className="bg-[#071018] text-white">
-        <Container className="grid gap-6 py-7 sm:py-10 lg:grid-cols-[1fr_360px] lg:items-center">
+        <Container className="py-7 sm:py-10">
           <div className="max-w-3xl">
             <p className="inline-flex items-center gap-2 text-sm font-black text-orange-400">
               <Megaphone aria-hidden className="size-5" />
@@ -135,29 +136,9 @@ export default async function AdsPage({ searchParams }: AdsPageProps) {
             </p>
             <h1 className="mt-3 text-3xl font-black leading-tight sm:text-4xl">كل العروض النشطة في مكان واحد</h1>
             <p className="mt-3 text-sm leading-7 text-white/70 sm:text-base">
-              تابع إعلانات المحلات، العروض الموسمية، والفئات المميزة داخل دليل صنعة حمص.
+              تابع إعلانات المحلات، العروض الموسمية، والفئات المميزة داخل دليل صناعة حمص.
             </p>
-            <form action="/search" className="mt-5 grid overflow-hidden rounded-lg bg-white text-slate-950 shadow-lg shadow-black/20 sm:grid-cols-[1fr_56px]">
-              <input className="h-12 bg-transparent px-4 text-sm outline-none" name="q" placeholder="ابحث عن محل أو خدمة" />
-              <button className="grid h-12 place-items-center bg-orange-500 text-white" type="submit" aria-label="بحث">
-                <Search aria-hidden className="size-5" />
-              </button>
-            </form>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 rounded-lg border border-white/10 bg-white/5 p-3 text-center">
-            <div>
-              <p className="text-2xl font-black">{ads.length}</p>
-              <p className="text-[11px] font-bold text-white/60">إعلان</p>
-            </div>
-            <div>
-              <p className="text-2xl font-black">حمص</p>
-              <p className="text-[11px] font-bold text-white/60">النطاق</p>
-            </div>
-            <div>
-              <p className="text-2xl font-black">نشط</p>
-              <p className="text-[11px] font-bold text-white/60">الحالة</p>
-            </div>
+            <SearchSuggestionsInput className="mt-5 shadow-lg shadow-black/20" inputPlaceholder="ابحث عن محل أو خدمة" />
           </div>
         </Container>
       </section>

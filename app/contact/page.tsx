@@ -1,4 +1,5 @@
 import { Clock3, MailQuestion, MapPin, MessageSquareText, PlusCircle, ShieldCheck } from "lucide-react";
+import { ContactForm } from "@/components/forms/contact-form";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
@@ -20,9 +21,9 @@ const contactPaths = [
   },
   {
     title: "اقتراح أو ملاحظة",
-    description: "ابحث عن المحل المطلوب واستخدم البلاغات أو التقييمات لإيصال الملاحظات.",
-    href: "/search",
-    label: "البحث في الدليل",
+    description: "أرسل لنا ملاحظة عن محل، مشكلة في البيانات، أو فكرة لتحسين الدليل.",
+    href: "#contact-form",
+    label: "إرسال ملاحظة",
     icon: MessageSquareText,
   },
 ];
@@ -44,26 +45,29 @@ export default function ContactPage() {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-        <section className="grid gap-4 md:grid-cols-3 lg:grid-cols-1">
-          {contactPaths.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Card key={item.title}>
-                <CardContent className="grid gap-4">
-                  <div className="grid size-12 place-items-center rounded-lg bg-orange-50 text-orange-600">
-                    <Icon aria-hidden className="size-6" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-black text-slate-950">{item.title}</h2>
-                    <p className="mt-2 text-sm leading-7 text-slate-600">{item.description}</p>
-                  </div>
-                  <ButtonLink className="w-fit" href={item.href} variant="outline">
-                    {item.label}
-                  </ButtonLink>
-                </CardContent>
-              </Card>
-            );
-          })}
+        <section className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-1">
+            {contactPaths.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Card key={item.title}>
+                  <CardContent className="grid gap-4">
+                    <div className="grid size-12 place-items-center rounded-lg bg-orange-50 text-orange-600">
+                      <Icon aria-hidden className="size-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-black text-slate-950">{item.title}</h2>
+                      <p className="mt-2 text-sm leading-7 text-slate-600">{item.description}</p>
+                    </div>
+                    <ButtonLink className="w-fit" href={item.href} variant="outline">
+                      {item.label}
+                    </ButtonLink>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+          <ContactForm />
         </section>
 
         <aside className="space-y-6">

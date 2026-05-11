@@ -3,10 +3,10 @@ import { updateHomeHeroAction } from "@/actions/admin";
 import { AdminActionForm, AdminSubmitButton } from "@/components/admin/admin-action-form";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { fallbackHomeHero, type HomeHeroSettings } from "@/lib/data/marketplace";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function AdminSettingsPage() {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data } = await supabase
     .from("site_settings")
     .select("value")

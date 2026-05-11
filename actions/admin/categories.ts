@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { AdminActionResult } from "@/lib/admin/action-result";
 import { categoryIdSchema, categoryUpsertSchema } from "@/lib/validation/admin";
 import {
@@ -37,7 +37,7 @@ export async function upsertCategoryAction(
   const imageUpload = await uploadAdminImage("category-images", formData, "image");
   if (imageUpload.error) return failure(imageUpload.error);
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const payload = {
     description: parsed.data.description,
     icon_name: parsed.data.iconName,
@@ -68,7 +68,7 @@ export async function deleteCategoryAction(
   const parsed = parseAdminForm(categoryIdSchema, { categoryId: text(formData, "categoryId") });
   if (parsed.error) return validationFailure(parsed.error);
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { error } = await supabase.from("categories").delete().eq("id", parsed.data.categoryId);
   if (error) return supabaseFailure(error, "تعذر حذف الفئة. تأكد من عدم ارتباطها بمحلات أو فئات فرعية");
 

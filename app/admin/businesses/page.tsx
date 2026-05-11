@@ -14,7 +14,7 @@ import { AdminTable } from "@/components/admin/admin-table";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Pagination } from "@/components/ui/pagination";
 import { adminPageSize, getAdminRange, getTotalPages, parseAdminPage } from "@/lib/admin/pagination";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type AdminBusinessesPageProps = {
   searchParams: Promise<Record<string, string | undefined>>;
@@ -58,7 +58,7 @@ export default async function AdminBusinessesPage({ searchParams }: AdminBusines
   const params = await searchParams;
   const page = parseAdminPage(params.page);
   const range = getAdminRange(page);
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data: categories } = await supabase
     .from("categories")
     .select("id, name")

@@ -1,19 +1,20 @@
 import Link from "next/link";
-import { ArrowLeft, LocateFixed, MapPin, Search } from "lucide-react";
+import { LocateFixed } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { HeroAdCard } from "@/components/home/hero-ad-card";
+import { SearchSuggestionsInput } from "@/components/search/search-suggestions-input";
 import type { HomeAd, HomeHeroSettings } from "@/lib/data/marketplace";
 
 const quickLinks = [
-  { href: "/search?category=10000000-0000-0000-0000-000000000001", label: "سيارات" },
-  { href: "/search?category=10000000-0000-0000-0000-000000000007", label: "نجارين" },
-  { href: "/search?category=10000000-0000-0000-0000-000000000006", label: "حدادة ولحام" },
+  { href: "/search?category=cars", label: "سيارات" },
+  { href: "/search?category=carpentry", label: "نجارين" },
+  { href: "/search?category=welding", label: "حدادة ولحام" },
   { href: "/search?near=1&sort=distance", label: "قريب مني", icon: LocateFixed },
 ];
 
 export function HeroSearch({ ad, hero }: { ad?: HomeAd; hero: HomeHeroSettings }) {
   return (
-    <section className="relative isolate overflow-hidden bg-[#071018] text-white">
+    <section className="relative isolate z-20 bg-[#071018] text-white">
       <div
         aria-label={hero.alt_text ?? "خلفية خدمات صناعية في حمص"}
         className="absolute inset-0 -z-20 bg-cover bg-center"
@@ -33,22 +34,12 @@ export function HeroSearch({ ad, hero }: { ad?: HomeAd; hero: HomeHeroSettings }
             ابحث عن الخدمات الصناعية، قارن التقييمات، واعرف الأقرب إليك بدون تضييع وقت.
           </p>
 
-          <form action="/search" className="mt-6 grid w-full gap-3 rounded-xl border border-white/15 bg-white/95 p-2 text-slate-950 shadow-2xl shadow-black/25 backdrop-blur md:max-w-3xl md:grid-cols-[minmax(0,1.35fr)_minmax(150px,0.7fr)_132px]">
-            <label className="flex min-h-[52px] items-center gap-3 rounded-lg bg-slate-50 px-4 ring-1 ring-slate-100 md:bg-white md:ring-0">
-              <Search aria-hidden className="size-5 shrink-0 text-orange-500" />
-              <span className="sr-only">الخدمة أو المحل</span>
-              <input className="h-12 w-full bg-transparent text-sm font-bold outline-none placeholder:text-slate-400" name="q" placeholder="ابحث عن خدمة، محل، منتج..." type="search" />
-            </label>
-            <label className="flex min-h-[52px] items-center gap-3 rounded-lg bg-slate-50 px-4 ring-1 ring-slate-100 md:bg-white md:ring-0">
-              <MapPin aria-hidden className="size-5 shrink-0 text-orange-500" />
-              <span className="sr-only">الموقع</span>
-              <input className="h-12 w-full bg-transparent text-sm font-bold outline-none placeholder:text-slate-400" name="area" placeholder="كل حمص" type="search" />
-            </label>
-            <button className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-lg bg-orange-500 px-5 text-sm font-black text-white transition hover:bg-orange-600" type="submit">
-              بحث
-              <ArrowLeft aria-hidden className="size-4" />
-            </button>
-          </form>
+          <SearchSuggestionsInput
+            buttonLabel="بحث"
+            className="mt-6 w-full rounded-xl border border-white/15 bg-white/95 shadow-2xl shadow-black/25 backdrop-blur md:max-w-3xl"
+            inputPlaceholder="ابحث عن خدمة، محل، منتج..."
+            showAreaField
+          />
 
           <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {quickLinks.map((item) => {

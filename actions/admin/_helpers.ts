@@ -3,7 +3,7 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 import type { ZodError, ZodType } from "zod";
 import type { AdminActionResult } from "@/lib/admin/action-result";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { buildStoragePath, uploadLimits, validateImageFile } from "@/lib/uploads";
 
 export function text(formData: FormData, name: string) {
@@ -56,7 +56,7 @@ export async function uploadAdminImage(bucket: "category-images" | "ad-images", 
     return { error: validation.message, url: null };
   }
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const path = buildStoragePath(["admin", bucket], validation.extension);
   const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: false });
 
@@ -71,7 +71,7 @@ export async function uploadAdminImage(bucket: "category-images" | "ad-images", 
 export async function revalidateBusinessById(businessId: string) {
   if (!businessId) return;
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data } = await supabase.from("businesses").select("slug").eq("id", businessId).single();
 
   if (data?.slug) {
@@ -80,7 +80,7 @@ export async function revalidateBusinessById(businessId: string) {
 }
 
 export async function ensureRecordExists(table: "businesses" | "categories", id: string, message: string) {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data, error } = await supabase.from(table).select("id").eq("id", id).maybeSingle();
 
   if (error) return failure(`تعذر التحقق من البيانات: ${error.message}`);

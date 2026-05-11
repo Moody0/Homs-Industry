@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { AdminActionResult } from "@/lib/admin/action-result";
 import { failure, nullableText, success, supabaseFailure, uploadAdminImage } from "./_helpers";
 
@@ -16,7 +16,7 @@ export async function updateHomeHeroAction(
 
   const existingImageUrl = nullableText(formData, "existingImageUrl");
   const finalImageUrl = imageUpload.url ?? existingImageUrl ?? "/images/hero-image.png";
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { error } = await supabase.from("site_settings").upsert({
     key: "home_hero",
     value: {

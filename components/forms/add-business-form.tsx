@@ -20,7 +20,7 @@ export function AddBusinessForm({ areas, categories, subcategories }: AddBusines
   const [state, formAction] = useActionState(addBusinessAction, initialState);
 
   return (
-    <form action={formAction} className="grid gap-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <form action={formAction} className="grid gap-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm" encType="multipart/form-data">
       <div className="grid gap-4 md:grid-cols-2">
         <AuthField id="name" label="اسم المحل" name="name" placeholder="مثال: ورشة الكمال" required />
         <label className="grid gap-2" htmlFor="areaId">

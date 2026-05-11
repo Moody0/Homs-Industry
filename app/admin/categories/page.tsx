@@ -3,10 +3,10 @@ import { AdminActionForm, AdminSubmitButton } from "@/components/admin/admin-act
 import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminTable } from "@/components/admin/admin-table";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function AdminCategoriesPage() {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data: categories } = await supabase
     .from("categories")
     .select("id, name, slug, description, icon_name, image_url, sort_order, is_active")

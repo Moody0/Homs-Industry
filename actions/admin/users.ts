@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { AdminActionResult } from "@/lib/admin/action-result";
 import { updateUserRoleSchema } from "@/lib/validation/admin";
 import { failure, parseAdminForm, success, supabaseFailure, text, validationFailure } from "./_helpers";
@@ -18,7 +18,7 @@ export async function changeUserRoleAction(
   });
   if (parsed.error) return validationFailure(parsed.error);
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data: targetUser, error: targetError } = await supabase
     .from("profiles")
     .select("id, role")

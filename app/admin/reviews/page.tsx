@@ -6,7 +6,7 @@ import { AdminTable } from "@/components/admin/admin-table";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Pagination } from "@/components/ui/pagination";
 import { adminPageSize, getAdminRange, getTotalPages, parseAdminPage } from "@/lib/admin/pagination";
-import { createClient } from "@/lib/supabase/server";
+import { dbQuery } from "@/lib/db/postgres";
 
 type AdminReviewsPageProps = {
   searchParams: Promise<Record<string, string | undefined>>;
@@ -33,6 +33,31 @@ type ReportRow = {
   user: ReviewRelation<{ full_name: string; username: string }>;
 };
 
+type ReviewQueryRow = {
+  business_name: string | null;
+  business_slug: string | null;
+  comment: string | null;
+  created_at: string;
+  id: string;
+  rating: number;
+  status: string;
+  user_full_name: string | null;
+  user_username: string | null;
+};
+
+type ReportQueryRow = {
+  business_name: string | null;
+  business_slug: string | null;
+  created_at: string;
+  id: string;
+  reason: string;
+  review_comment: string | null;
+  review_id: string | null;
+  status: string;
+  user_full_name: string | null;
+  user_username: string | null;
+};
+
 function relationOne<T>(relation: ReviewRelation<T>) {
   return Array.isArray(relation) ? relation[0] : relation;
 }
@@ -45,46 +70,109 @@ export default async function AdminReviewsPage({ searchParams }: AdminReviewsPag
   const params = await searchParams;
   const page = parseAdminPage(params.page);
   const range = getAdminRange(page);
-  const supabase = await createClient();
-
-  let businessIds: string[] | null = null;
-  let userIds: string[] | null = null;
+  const where: string[] = [];
+  const values: unknown[] = [];
 
   if (params.business) {
-    const q = safeSearch(params.business);
-    const { data } = await supabase.from("businesses").select("id").ilike("name", `%${q}%`).limit(100);
-    businessIds = (data ?? []).map((row) => row.id);
+    values.push(`%${safeSearch(params.business)}%`);
+    where.push(`b.name ilike $${values.length}`);
   }
 
   if (params.user) {
-    const q = safeSearch(params.user);
-    const { data } = await supabase
-      .from("profiles")
-      .select("id")
-      .or(`full_name.ilike.%${q}%,username.ilike.%${q}%`)
-      .limit(100);
-    userIds = (data ?? []).map((row) => row.id);
+    values.push(`%${safeSearch(params.user)}%`);
+    where.push(`(p.full_name ilike $${values.length} or p.username::text ilike $${values.length})`);
   }
 
-  let query = supabase
-    .from("reviews")
-    .select("id, rating, comment, status, created_at, business:businesses(name, slug), user:profiles(full_name, username)", { count: "exact" })
-    .order("created_at", { ascending: false });
+  if (params.status) {
+    values.push(params.status);
+    where.push(`r.status::text = $${values.length}`);
+  }
 
-  if (params.status) query = query.eq("status", params.status);
-  if (params.rating) query = query.eq("rating", Number(params.rating));
-  if (businessIds) query = businessIds.length ? query.in("business_id", businessIds) : query.eq("business_id", "00000000-0000-0000-0000-000000000000");
-  if (userIds) query = userIds.length ? query.in("user_id", userIds) : query.eq("user_id", "00000000-0000-0000-0000-000000000000");
+  if (params.rating) {
+    values.push(Number(params.rating));
+    where.push(`r.rating = $${values.length}`);
+  }
 
-  const { count, data: reviews } = await query.range(range.from, range.to);
-  const rows = (reviews ?? []) as ReviewRow[];
+  const whereSql = where.length ? `where ${where.join(" and ")}` : "";
+  const countResult = await dbQuery<{ count: number }>(
+    `
+      select count(*)::int as count
+      from public.reviews r
+      left join public.businesses b on b.id = r.business_id
+      left join public.profiles p on p.id = r.user_id
+      ${whereSql}
+    `,
+    values,
+  );
+  const count = countResult.rows[0]?.count ?? 0;
+  const reviewValues = [...values, adminPageSize, range.from];
+  const reviewResult = await dbQuery<ReviewQueryRow>(
+    `
+      select
+        r.id::text,
+        r.rating,
+        r.comment,
+        r.status::text,
+        r.created_at::text,
+        b.name as business_name,
+        b.slug as business_slug,
+        p.full_name as user_full_name,
+        p.username::text as user_username
+      from public.reviews r
+      left join public.businesses b on b.id = r.business_id
+      left join public.profiles p on p.id = r.user_id
+      ${whereSql}
+      order by r.created_at desc
+      limit $${reviewValues.length - 1}
+      offset $${reviewValues.length}
+    `,
+    reviewValues,
+  );
+  const rows: ReviewRow[] = reviewResult.rows.map((row) => ({
+    id: row.id,
+    rating: row.rating,
+    comment: row.comment,
+    status: row.status,
+    created_at: row.created_at,
+    business: row.business_name && row.business_slug ? { name: row.business_name, slug: row.business_slug } : null,
+    user: row.user_full_name && row.user_username ? { full_name: row.user_full_name, username: row.user_username } : null,
+  }));
 
-  const { data: reportRows } = await supabase
-    .from("review_reports")
-    .select("id, reason, status, created_at, review:reviews(id, comment, business:businesses(name, slug)), user:profiles(full_name, username)")
-    .order("created_at", { ascending: false })
-    .limit(20);
-  const reports = (reportRows ?? []) as ReportRow[];
+  const reportResult = await dbQuery<ReportQueryRow>(
+    `
+      select
+        rr.id::text,
+        rr.reason,
+        rr.status::text,
+        rr.created_at::text,
+        r.id::text as review_id,
+        r.comment as review_comment,
+        b.name as business_name,
+        b.slug as business_slug,
+        p.full_name as user_full_name,
+        p.username::text as user_username
+      from public.review_reports rr
+      left join public.reviews r on r.id = rr.review_id
+      left join public.businesses b on b.id = r.business_id
+      left join public.profiles p on p.id = rr.user_id
+      order by rr.created_at desc
+      limit 20
+    `,
+  );
+  const reports: ReportRow[] = reportResult.rows.map((row) => ({
+    id: row.id,
+    reason: row.reason,
+    status: row.status,
+    created_at: row.created_at,
+    review: row.review_id
+      ? {
+          id: row.review_id,
+          comment: row.review_comment,
+          business: row.business_name && row.business_slug ? { name: row.business_name, slug: row.business_slug } : null,
+        }
+      : null,
+    user: row.user_full_name && row.user_username ? { full_name: row.user_full_name, username: row.user_username } : null,
+  }));
 
   return (
     <>

@@ -5,7 +5,7 @@ import { AdminTable } from "@/components/admin/admin-table";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Pagination } from "@/components/ui/pagination";
 import { adminPageSize, getAdminRange, getTotalPages, parseAdminPage } from "@/lib/admin/pagination";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const adTypes = ["home_slider", "featured_business", "category_ad"] as const;
 
@@ -41,7 +41,7 @@ export default async function AdminAdsPage({ searchParams }: AdminAdsPageProps) 
   const page = parseAdminPage(params.page);
   const range = getAdminRange(page);
   const today = new Date().toISOString().slice(0, 10);
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const [{ data: categories }, { data: businesses }] = await Promise.all([
     supabase.from("categories").select("id, name").order("sort_order"),
     supabase.from("businesses").select("id, name").order("created_at", { ascending: false }).limit(100),
