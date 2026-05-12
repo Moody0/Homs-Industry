@@ -15,5 +15,5 @@ type StatusBadgeProps = {
 
 export function StatusBadge({ status, children }: StatusBadgeProps) {
   const key = status in variants ? (status as keyof typeof variants) : "inactive";
-  return <span className={cn("inline-flex rounded-md px-2.5 py-1 text-xs font-black ring-1 ring-inset", variants[key])}>{children ?? status}</span>;
+  return <span className={cn("inline-flex w-fit items-center rounded-md px-2.5 py-1 text-xs font-black ring-1 ring-inset", variants[key])}>{children ?? status}</span>;
 }
